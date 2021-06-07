@@ -39,6 +39,7 @@ struct matrix_t{
 
 /* FUNCTION DECLARATIONS */
 
+void free_matrix(struct matrix_t* matrix);
 struct matrix_t* create_matrix(int rows, int columns);
 struct node_t* init_node(int row, int column, struct node_t* up, struct node_t* down, struct node_t* left, struct node_t* right);
 
@@ -46,6 +47,34 @@ struct node_t* init_node(int row, int column, struct node_t* up, struct node_t* 
 
 
 /* FUNCTION DEFINITIONS */
+
+void free_matrix(struct matrix_t* matrix){
+
+    struct node_t* columnIterNode = matrix->firstNode;
+    struct node_t* holdNode;
+
+    // iterate left->right and then move up
+
+    //iterate through rows
+    for(struct node_t* rowIterNode = matrix->firstNode; rowIterNode != NULL;){
+
+        // move up - doing it early so that rowIterNode isnt affected by the frees
+        rowIterNode = rowIterNode->up;
+
+        // iterate through columns
+        while(columnIterNode != NULL){
+
+            // free current node
+            holdNode = columnIterNode->right;
+            free(columnIterNode);
+            columnIterNode = holdNode;
+        }
+
+        columnIterNode = rowIterNode;
+    }
+
+    free(matrix);
+}
 
 // O(kn) assuming malloc is O(n) and k is the amount of nodes the matrix should contain(rows*columns)
 struct matrix_t* create_matrix(int rows, int columns){
