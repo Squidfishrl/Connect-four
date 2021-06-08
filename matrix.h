@@ -175,7 +175,8 @@ struct matrix_t* create_matrix(int rows, int columns){
     }
 
     // for some reason thare is always 1 extra node on row 0 to the right so I remove it
-    // free(newMatrix->bottomRightNode->right);
+    free(newMatrix->nodeMap[0][columns-1]->right);
+    get_node_by_cords(newMatrix, 0, columns-1)->right = NULL;
 
     return newMatrix;
 }
