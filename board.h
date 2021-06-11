@@ -10,15 +10,15 @@
 
 struct node_t{
 
-    int row;
-    int column;
+    short row;
+    short column;
 
     struct node_t* up;
     struct node_t* down;
     struct node_t* left;
     struct node_t* right;
 
-    int type;
+    short type;
     /*
     0 - empty;
     1 - player 1
@@ -30,8 +30,8 @@ struct node_t{
 
 struct matrix_t{
 
-    int rows;
-    int columns;
+    short rows;
+    short columns;
 
     struct node_t*** nodeMap; // 2d pointer array [row][column] (0,0) is the bottom left
 };
@@ -62,37 +62,30 @@ struct node_t* get_node_by_cords(struct matrix_t* matrix, int row, int column){
 // O(n), where n is the amount of nodes connected to the matrix
 void print_matrix(struct matrix_t* matrix){
 
-    struct node_t* iterNode1 = get_node_by_cords(matrix, matrix->rows-1, matrix->columns-1);
-    struct node_t* iterNode2 = iterNode1; // 2 lines instead of 1 cause lines are shorter
-
-    // TODO: traverse matrix through pointers, rather than defining int row/ int column
     // iterate through rows
-    for(int row = 0; row < matrix->rows; row++){
+    for(struct node_t* iterNode1 = get_node_by_cords(matrix, matrix->rows-1, 0); iterNode1 != NULL; iterNode1 = iterNode1->down){
 
         // iterate through the columns
-        for(int column = 0; column < matrix->columns; column++){
-
-            if(column == 0){
+        for(struct node_t* iterNode2 = iterNode1; iterNode2 != NULL; iterNode2 = iterNode2->right){
+            if(iterNode2->column == 0){
                 printf("|");
             }
 
             switch(iterNode2->type){
                 case 0:
-                    printf("A");
+                    printf(" ");
                     break;
                 case 1:
-                    printf("X");
+                    printf("\033[31mX\033[0m"); // in red
                     break;
                 case 2:
-                    printf("O");
+                    printf("\033[0;34mO\033[0m"); // in blue
                     break;
             }
-
             printf("|");
         }
         printf("\n");
-        iterNode1 = iterNode1->down;
-        iterNode2 = iterNode1;
+
     }
 }
 
@@ -168,7 +161,7 @@ struct matrix_t* create_matrix(int rows, int columns){
             tempNode1 = tempNode1->up;
 
             // add to matrix
-            newMatrix->nodeMap[row][column] = tempNode1;
+            newMatrix->nodeMap[row][column] = tempNode1; // <- here
         }
 
         // 2 way link bottommost node[current column] to node->right
@@ -191,11 +184,11 @@ struct matrix_t* init_matrix(int rows, int columns){
     // create matrix and link to the node network
     struct matrix_t* newMatrix = (struct matrix_t*)malloc(sizeof(struct matrix_t));
 
-    // allocate first dimension for the matrix
+    // allocate first dimension for the matrix [row amount]
     newMatrix->nodeMap = (struct node_t***)malloc(rows * sizeof(struct node_t**));
 
-    // allocate second dimension for the matrix
-    for(int i = 0; i<columns; i++){
+    // allocate second dimension for the matrix [column amount]
+    for(int i = 0; i<rows; i++){
         newMatrix->nodeMap[i] = (struct node_t**)malloc(columns*sizeof(struct node_t*));
     }
 
@@ -220,4 +213,3 @@ struct node_t* init_node(int row, int column, struct node_t* up, struct node_t* 
 }
 
 /* -------------------------------------------------------------------------- */
-
