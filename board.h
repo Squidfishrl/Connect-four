@@ -63,7 +63,7 @@ struct node_t* get_node_by_cords(struct matrix_t* matrix, int row, int column){
 void print_matrix(struct matrix_t* matrix){
 
     struct node_t* iterNode1 = get_node_by_cords(matrix, matrix->rows-1, matrix->columns-1);
-    struct node_t* iterNode2 = iterNode1; // 2 lines instead of 1 cuz lines are shorter
+    struct node_t* iterNode2 = iterNode1; // 2 lines instead of 1 cause lines are shorter
 
     // iterate through rows
     for(int row = 0; row < matrix->rows; row++){
@@ -102,7 +102,7 @@ void free_matrix(struct matrix_t* matrix){
     //iterate through rows
     for(struct node_t* rowIterNode = get_node_by_cords(matrix, 0, 0); rowIterNode != NULL;){
 
-        // move up - doing it early so that rowIterNode isnt affected by the frees
+        // move up - doing it early so that rowIterNode isn't affected by the frees
         rowIterNode = rowIterNode->up;
 
         // iterate through columns
@@ -154,7 +154,7 @@ struct matrix_t* create_matrix(int rows, int columns){
                 tempNode1->up = init_node(row, column, NULL, tempNode1, NULL, NULL);
 
             }else{
-                // 2 way link current node and node above it. Also 2 way link abovenode->left with above node
+                // 2 way link current node and node above it. Also 2 way link above node->left with above node
                 tempNode1->up = init_node(row, column, NULL, tempNode1, tempNode1->left->up, NULL);
                 tempNode1->left->up->right = tempNode1->up;
             }
@@ -174,7 +174,7 @@ struct matrix_t* create_matrix(int rows, int columns){
         tempNode1 = tempNode2;
     }
 
-    // for some reason thare is always 1 extra node on row 0 to the right so I remove it
+    // for some reason there is always 1 extra node on row 0 to the right so I remove it
     free(newMatrix->nodeMap[0][columns-1]->right);
     get_node_by_cords(newMatrix, 0, columns-1)->right = NULL;
 
@@ -199,7 +199,7 @@ struct matrix_t* init_matrix(int rows, int columns){
 
     return newMatrix;
 }
-// O(n), althought time complexity of malloc is rather non-deterministic
+// O(n), although time complexity of malloc is rather non-deterministic
 struct node_t* init_node(int row, int column, struct node_t* up, struct node_t* down, struct node_t* left, struct node_t* right){
 
     struct node_t* initNode = (struct node_t*)malloc(sizeof(struct node_t));
@@ -215,3 +215,4 @@ struct node_t* init_node(int row, int column, struct node_t* up, struct node_t* 
 }
 
 /* -------------------------------------------------------------------------- */
+

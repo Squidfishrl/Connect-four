@@ -2,6 +2,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include "board.h"
+#include "game.h"
 // also include game logic once its done
 
 /* -------------------------------------------------------------------------- */
@@ -62,7 +64,7 @@ void display_main_menu(){
 
     switch(optionPick){
         case 1: // new game
-            // TODO: initialise new game (function alongside game logic + game loop has to be in a seperate .h!)
+            // TODO: initialise new game (function alongside game logic + game loop has to be in a separate .h!)
             break;
         case 2: // stats
             // TODO: once game loop is done, track different stats during game loop (add a struct for it and save as binary file)
