@@ -65,15 +65,20 @@ void print_matrix(struct matrix_t* matrix){
     struct node_t* iterNode1 = get_node_by_cords(matrix, matrix->rows-1, matrix->columns-1);
     struct node_t* iterNode2 = iterNode1; // 2 lines instead of 1 cause lines are shorter
 
+    // TODO: traverse matrix through pointers, rather than defining int row/ int column
     // iterate through rows
     for(int row = 0; row < matrix->rows; row++){
 
+        // iterate through the columns
         for(int column = 0; column < matrix->columns; column++){
-            printf("|");
+
+            if(column == 0){
+                printf("|");
+            }
 
             switch(iterNode2->type){
                 case 0:
-                    printf(" ");
+                    printf("A");
                     break;
                 case 1:
                     printf("X");
