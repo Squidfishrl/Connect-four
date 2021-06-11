@@ -96,7 +96,7 @@ short add_piece(struct matrix_t* matrix, short player, short position)
 
 	struct node_t* node = get_node_by_cords(matrix, position, 0);
 
-	for(; node->type == 0 || node == NULL; node = node->up);
+	for(; node != NULL && node->type == 0; node = node->up);
 
 	if (node == NULL)
 	{
