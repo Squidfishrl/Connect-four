@@ -2,26 +2,25 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#ifndef MAX_PATH
-#define MAX_PATH	(260)
-#endif // MAX_PATH
+#include "board.h"
+
 
 /* -------------------------------------------------------------------------- */
 
 
 /* FUNCTION DECLARATIONS */
 
-void game_loop(struct matrix_t* matrix, char log_name[MAX_PATH]);
+void game_loop(struct matrix_t* matrix, char* log_name);
 short add_piece(struct matrix_t* matrix, short player, short position);
 short check_win(struct matrix_t* matrix, short player, short position);
-void log_moves(struct matrix_t* matrix, short moves[], short max_moves, char log_name[MAX_PATH]);
+void log_moves(struct matrix_t* matrix, short moves[], short max_moves, char *log_name);
 
 /* -------------------------------------------------------------------------- */
 
 
 /* FUNCTION DEFINITIONS */
 
-void game_loop(struct matrix_t* matrix, char log_name[MAX_PATH])
+void game_loop(struct matrix_t* matrix, char* log_name)
 {
 	short player = 1;
 	short position = 0;
@@ -40,14 +39,33 @@ void game_loop(struct matrix_t* matrix, char log_name[MAX_PATH])
 	// Log move - Done
 	// Display matrix - Done
 	// Check win - Done
-	for (short i = 0; 1; player =  1 + !(player - 1))
+	for (short i = 0; 1; player =  1 + !(player - 1), i++)
 	{
+
+        system("clear");
+        print_matrix(matrix);
+        printf("\n %d/%d \n\n", i, max_moves);
+
+        // draw condition - no remaining moves
+        if (i == max_moves){
+            printf("No more moves - Draw!\n");
+
+            // eats scanf newline
+            getchar();
+
+            printf("Press any key to continue: ");
+            getchar();
+            break;
+        }
+
         while (1)
 		{
 			printf("Player %hd: ", player);
 			scanf("%hd", &position);
+          	position--;
 
-			switch (add_piece(matrix, player, position-1))
+
+			switch (add_piece(matrix, player, position))
 			{
 				case 0:		// Successful move
 					break;
@@ -68,18 +86,18 @@ void game_loop(struct matrix_t* matrix, char log_name[MAX_PATH])
 			break;
 		}
 
+
+
 		moves[i] = position;
 
-		print_matrix(matrix);
+		// print_matrix(matrix);
 
-		if (check_win(matrix, player, position))
-		{
-			printf("Player %hd wins!\n");
-		}
-		else if (i >= max_moves)
-		{
-			printf("No more moves - Draw!\n");
-		}
+		// if (check_win(matrix, player, position))
+		// {
+		// 	printf("Player %hd wins!\n", player);
+		// }
+		// else
+
 	}
 
 	log_moves(matrix, moves, max_moves, log_name);
@@ -89,14 +107,15 @@ void game_loop(struct matrix_t* matrix, char log_name[MAX_PATH])
 
 short add_piece(struct matrix_t* matrix, short player, short position)
 {
-	if (position < 0 || position > matrix->rows)
+	if (position < 0 || position >= matrix->columns)
 	{
 		return 1;
 	}
 
-	struct node_t* node = get_node_by_cords(matrix, position, 0);
+	struct node_t* node = get_node_by_cords(matrix, 0, position);
 
-	for(; node != NULL && node->type == 0; node = node->up);
+
+	for(; node != NULL && node->type != 0; node = node->up);
 
 	if (node == NULL)
 	{
@@ -112,10 +131,10 @@ short add_piece(struct matrix_t* matrix, short player, short position)
 
 short check_win(struct matrix_t* matrix, short player, short position)
 {
-    struct node_t* start = get_node_by_cords(matrix, position, matrix->columns - 1), *node;
+    struct node_t* start = get_node_by_cords(matrix, matrix->rows-1, position), *node;
     short piece_count = 0;
 
-    for (; start->type == 0; start = start->down);
+    for (; start != NULL && start->type == 0; start = start->down);
 
     for (node = start, piece_count = 0; node != NULL && node->type == player; piece_count++, node = node->right->up);
     if (piece_count >= 4)
@@ -162,7 +181,7 @@ short check_win(struct matrix_t* matrix, short player, short position)
     return 0;
 }
 
-void log_moves(struct matrix_t* matrix, short moves[], short max_moves, char log_name[MAX_PATH])
+void log_moves(struct matrix_t* matrix, short moves[], short max_moves, char* log_name)
 {
 	FILE* log;
 
@@ -225,4 +244,3 @@ void log_moves(struct matrix_t* matrix, short moves[], short max_moves, char log
 }
 
 /* -------------------------------------------------------------------------- */
-

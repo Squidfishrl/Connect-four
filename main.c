@@ -2,7 +2,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "board.h"
 #include "game.h"
 // also include game logic once its done
 
@@ -49,37 +48,51 @@ void display_main_menu(){
     // }
     */
 
-    system("clear");
-
-    printf("\033[0;93m \033[1m CONNECT FOUR \033[0m ");
-    printf("\n\n");
-    printf(" \033[0;5m-\033[0m\033[0;97m 1) NEW GAME \033[0m \n");
-    printf(" \033[0;5m-\033[0m\033[0;97m 2) STATS \033[0m \n");
-    printf(" \033[0;5m-\033[0m\033[0;97m 3) SETTINGS \033[0m \n");
-    printf(" \033[0;5m-\033[0m\033[0;97m 4) QUIT \033[0m \n");
-
-    printf(" \n go to: ");
     int optionPick;
-    scanf("%d", &optionPick);
 
-    switch(optionPick){
-        case 1: // new game
-            // TODO: initialise new game (function alongside game logic + game loop has to be in a separate .h!)
-            break;
-        case 2: // stats
-            // TODO: once game loop is done, track different stats during game loop (add a struct for it and save as binary file)
-            // TODO: this displays them
-            break;
-        case 3: // settings
-            display_settings_menu();
-            break;
-        case 4: // quit
+    do{
 
-            break;
-        default:
-            printf("Error - invalid option");
-            break; // not needed but whatever
-    }
+        system("clear");
+
+        printf("\033[0;93m \033[1m CONNECT FOUR \033[0m ");
+        printf("\n\n");
+        printf(" \033[0;5m-\033[0m\033[0;97m 1) NEW GAME \033[0m \n");
+        printf(" \033[0;5m-\033[0m\033[0;97m 2) STATS \033[0m \n");
+        printf(" \033[0;5m-\033[0m\033[0;97m 3) SETTINGS \033[0m \n");
+        printf(" \033[0;5m-\033[0m\033[0;97m 4) QUIT \033[0m \n");
+
+        printf(" \n go to: ");
+
+
+        scanf("%d", &optionPick);
+
+        switch(optionPick){
+
+            case 1: // new game
+                struct matrix_t* matrix = create_matrix(9, 9);
+                char str[] = "log.log";
+                game_loop(matrix, str);
+                break;
+            case 2: // stats
+                // TODO: once game loop is done, track different stats during game loop (add a struct for it and save as binary file)
+                // TODO: this displays them
+                break;
+            case 3: // settings
+                // display_settings_menu();
+                break;
+            case 4: // quit
+                printf("Exiting program!");
+                break;
+            default:
+                printf("Error - invalid option \n\n");
+                break; // not needed but whatever
+        }
+
+    }while(optionPick != 4);
+
+
+
+
 }
 
 /* -------------------------------------------------------------------------- */
