@@ -39,29 +39,19 @@ void game_loop(struct matrix_t* matrix, char* log_name)
 	// Log move - Done
 	// Display matrix - Done
 	// Check win - Done
+
+    // clear main menu
+    system("clear");
+    print_matrix(matrix);
 	for (short i = 0; 1; player =  1 + !(player - 1), i++)
 	{
-
-        system("clear");
-        print_matrix(matrix);
-        printf("\n %d/%d \n\n", i, max_moves);
-
-        // draw condition - no remaining moves
-        if (i == max_moves){
-            printf("No more moves - Draw!\n");
-
-            // eats scanf newline
-            getchar();
-
-            printf("Press any key to continue: ");
-            getchar();
-            break;
-        }
-
         while (1)
 		{
 			printf("Player %hd: ", player);
 			scanf("%hd", &position);
+
+            // clear board
+            system("clear");
           	position--;
 
 
@@ -86,9 +76,32 @@ void game_loop(struct matrix_t* matrix, char* log_name)
 			break;
 		}
 
-
-
 		moves[i] = position;
+
+        printf("\n %d/%d \n\n", i+1, max_moves);
+        print_matrix(matrix);
+
+        // win condition
+        if(check_win(matrix, player, position)){
+            printf("Player %hd wins!\n", player);
+
+            //eats scanf newline
+            getchar();
+
+            printf("Press any key to continue: ");
+            getchar();
+            break;
+        } // draw condition
+        else if (i == max_moves){
+            printf("No more moves - Draw!\n");
+
+            // eats scanf newline
+            getchar();
+
+            printf("Press any key to continue: ");
+            getchar();
+            break;
+        }
 
 		// print_matrix(matrix);
 
@@ -132,51 +145,39 @@ short add_piece(struct matrix_t* matrix, short player, short position)
 short check_win(struct matrix_t* matrix, short player, short position)
 {
     struct node_t* start = get_node_by_cords(matrix, matrix->rows-1, position), *node;
-    short piece_count = 0;
+    short piece_count;
 
-    for (; start != NULL && start->type == 0; start = start->down);
+    // start = last placed node
+    for (; start->down != NULL && start->type == 0; start = start->down);
+    printf("%hd, %hd \n", start->row, start->column);
 
-    for (node = start, piece_count = 0; node != NULL && node->type == player; piece_count++, node = node->right->up);
-    if (piece_count >= 4)
-	{
-		return 1;
-	}
+    // up and down case
+    for(piece_count = 1, node = start; node->up != NULL && node->up->type == player; node = node->up, piece_count++);
+    for(node = start; node->down != NULL && node->down->type == player; node = node->down, piece_count++);
+    if(piece_count >= 4){
+        return 1;
+    }
 
-    for (node = start, piece_count = 0; node != NULL && node->type == player; piece_count++, node = node->right);
-    if (piece_count >= 4)
-	{
-		return 1;
-	}
+    // left and right case
+    for(piece_count = 1, node = start; node->left != NULL && node->left->type == player; node = node->left, piece_count++);
+    for(node = start; node->right != NULL && node->right->type == player; node = node->right, piece_count++);
+    if(piece_count >= 4){
+        return 1;
+    }
 
-    for (node = start, piece_count = 0; node != NULL && node->type == player; piece_count++, node = node->right->down);
-    if (piece_count >= 4)
-	{
-		return 1;
-	}
+    // diagonal left right case
+    for(piece_count = 1, node = start; (node->left != NULL && node->left->up != NULL) && node->left->up->type == player; node = node->left->up, piece_count++);
+    for(node = start; (node->right != NULL && node->right->down != NULL) && node->right->down->type == player; node = node->right->down, piece_count++);
+    if(piece_count >= 4){
+        return 1;
+    }
 
-    for (node = start, piece_count = 0; node != NULL && node->type == player; piece_count++, node = node->down);
-    if (piece_count >= 4)
-	{
-		return 1;
-	}
-
-    for (node = start, piece_count = 0; node != NULL && node->type == player; piece_count++, node = node->left->down);
-    if (piece_count >= 4)
-	{
-		return 1;
-	}
-
-    for (node = start, piece_count = 0; node != NULL && node->type == player; piece_count++, node = node->left);
-    if (piece_count >= 4)
-	{
-		return 1;
-	}
-
-    for (node = start, piece_count = 0; node != NULL && node->type == player; piece_count++, node = node->left->up);
-    if (piece_count >= 4)
-	{
-		return 1;
-	}
+    // diagonal right left case
+    for(piece_count = 1, node = start; (node->right != NULL && node->right->up != NULL) && node->right->up->type == player; node = node->right->up, piece_count++);
+    for(node = start; (node->left != NULL && node->left->down != NULL) && node->left->down->type == player; node = node->left->down, piece_count++);
+    if(piece_count >= 4){
+        return 1;
+    }
 
     return 0;
 }
@@ -209,7 +210,7 @@ void log_moves(struct matrix_t* matrix, short moves[], short max_moves, char* lo
 
 	// Copy of print_matrix but with fprintf()
     struct node_t* iterNode1 = get_node_by_cords(matrix, matrix->rows-1, matrix->columns-1);
-    struct node_t* iterNode2 = iterNode1; // 2 lines instead of 1 cause lines are shorter
+    struct node_t* iterNode2 = iterNode1;
 
     // iterate through rows
     for(int row = 0; row < matrix->rows; row++){

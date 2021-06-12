@@ -69,7 +69,7 @@ void display_main_menu(){
         switch(optionPick){
 
             case 1: // new game
-                struct matrix_t* matrix = create_matrix(9, 9);
+                struct matrix_t* matrix = create_matrix(20, 7);
                 char str[] = "log.log";
                 game_loop(matrix, str);
                 break;

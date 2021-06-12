@@ -62,6 +62,18 @@ struct node_t* get_node_by_cords(struct matrix_t* matrix, int row, int column){
 // O(n), where n is the amount of nodes connected to the matrix
 void print_matrix(struct matrix_t* matrix){
 
+    // add numbers above the board
+    printf("|");
+    for(int i = 1; i <= matrix->columns; i++){
+        if(i > 9){
+            printf("%c|", i+55);
+        }else{
+            printf("%d|", i);
+        }
+
+    }
+    printf("\n");
+
     // iterate through rows
     for(struct node_t* iterNode1 = get_node_by_cords(matrix, matrix->rows-1, 0); iterNode1 != NULL; iterNode1 = iterNode1->down){
 
@@ -87,6 +99,17 @@ void print_matrix(struct matrix_t* matrix){
         printf("\n");
 
     }
+
+    // add numbers under the board
+    printf("|");
+    for(int i = 1; i <= matrix->columns; i++){
+        if(i > 9){
+            printf("%c|", i+55);
+        }else{
+            printf("%d|", i);
+        }
+    }
+    printf("\n");
 }
 
 // O(n), where n is the amount of nodes, connected to the matrix
