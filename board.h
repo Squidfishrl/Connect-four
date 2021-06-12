@@ -68,7 +68,7 @@ void print_matrix(struct matrix_t* matrix){
 
     char redColour[] = "\033[31m";
     char blueColour[] = "\033[34m";
-    char greenColour[] = "\033[0;5m\033[32m"; //also flashing
+    char greenColour[] = "\033[0;5m\033[32m"; //also 5m for flashing
     char defaultColour[] = "\033[0m";
     char *currentColour = defaultColour;
 

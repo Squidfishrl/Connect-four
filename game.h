@@ -2,8 +2,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "board.h"
+#include <string.h>
 
+#include "board.h"
 
 /* -------------------------------------------------------------------------- */
 
@@ -28,10 +29,7 @@ void game_loop(struct matrix_t* matrix, char* log_name)
 	const short max_moves = matrix->rows * matrix->columns;
 
 	short moves[max_moves];
-	for (short x = 0; x < max_moves; x++)
-	{
-		moves[x] = 0;
-	}
+    memset(moves, 0, max_moves*sizeof(short));
 
 	// Get player input - Done
 	// Verify input - Done
@@ -40,7 +38,6 @@ void game_loop(struct matrix_t* matrix, char* log_name)
 	// Display matrix - Done
 	// Check win - Done
 
-    // clear main menu
     print_matrix(matrix);
 
 	for (short i = 0; 1; player =  1 + !(player - 1), i++)
@@ -49,10 +46,7 @@ void game_loop(struct matrix_t* matrix, char* log_name)
 		{
 			printf("Player %hd: ", player);
 			scanf("%hd", &position);
-
-            // clear board
           	position--;
-
 
 			switch (add_piece(matrix, player, position))
 			{
@@ -75,20 +69,22 @@ void game_loop(struct matrix_t* matrix, char* log_name)
 			break;
 		}
 
-		moves[i] = position;
+		moves[i] = position+1;
 
         printf("\n %d/%d \n\n", i+1, max_moves);
         print_matrix(matrix);
 
+
+
         // win condition
         if(check_win(matrix, player, position)){
-            print_matrix(matrix); // to highlight winning nodes
 
+            print_matrix(matrix); // to highlight winning nodes
+            log_moves(matrix, moves, max_moves, log_name);
             printf("Player %hd wins!\n", player);
 
             //eats scanf newline
             getchar();
-
             printf("Press any key to continue: ");
             getchar();
             break;
@@ -103,24 +99,19 @@ void game_loop(struct matrix_t* matrix, char* log_name)
             getchar();
             break;
         }
-
-		// print_matrix(matrix);
-
-		// if (check_win(matrix, player, position))
-		// {
-		// 	printf("Player %hd wins!\n", player);
-		// }
-		// else
-
 	}
 
-	log_moves(matrix, moves, max_moves, log_name);
+	// log_moves(matrix, moves, max_moves, log_name);
 
 	return;
 }
 
 short add_piece(struct matrix_t* matrix, short player, short position)
 {
+    /* TODO: maybe add another argument struct node_t* node.
+    its then pointed to the new piece. Could be useful to then pass it to check_win
+    making it O(1) - even though there are some fors they iterate 7 times max(no matter the arguments)
+    */
 	if (position < 0 || position >= matrix->columns)
 	{
 		return 1;
@@ -199,62 +190,57 @@ short check_win(struct matrix_t* matrix, short player, short position)
 
 void log_moves(struct matrix_t* matrix, short moves[], short max_moves, char* log_name)
 {
-	FILE* log;
 
-	if ((log = fopen(log_name, "r+")));			// Try to open file
-	else if ((log = fopen(log_name, "w+")));	// File doesn't exist; try to create it
+	FILE* log_file;
+
+	if ((log_file = fopen(log_name, "a")));			// Try to open file
+	else if ((log_file = fopen(log_name, "w+")));	// File doesn't exist; try to create it
 	else										// Cannot create file
 	{
-		printf("Failed to create or open log file!\n");
+		printf("Failed to create or open log_file file!\n");
 		return;
 	}
 
-	fprintf(log, "\n");
-
-	for (short x = 0; moves[x] != 0 && x < max_moves; x++)
+	for (short x = 0; x < max_moves && moves[x] != 0 ; x++)
 	{
-		if (x % 2 == 0)
-		{
-			fprintf(log, "%hd. ", x / 2 + 1);
-		}
-
-		fprintf(log, "%hd ", moves[x]);
+        printf("%hd", moves[x]);
+        // log moves in order
+		fprintf(log_file, "%hd;", moves[x]);
 	}
 
-	fprintf(log, "\n\n");
+	fprintf(log_file, "\n\n");
 
 	// Copy of print_matrix but with fprintf()
-    struct node_t* iterNode1 = get_node_by_cords(matrix, matrix->rows-1, matrix->columns-1);
-    struct node_t* iterNode2 = iterNode1;
 
     // iterate through rows
-    for(int row = 0; row < matrix->rows; row++){
+    for(struct node_t* iterNode1 = get_node_by_cords(matrix, matrix->rows-1, 0); iterNode1 != NULL; iterNode1 = iterNode1->down){
 
-        for(int column = 0; column < matrix->columns; column++){
-            fprintf(log, "|");
+        // iterate through the columns
+        for(struct node_t* iterNode2 = iterNode1; iterNode2 != NULL; iterNode2 = iterNode2->right){
+            if(iterNode2->column == 0){
+                fprintf(log_file, "|");
+            }
 
             switch(iterNode2->type){
                 case 0:
-                    fprintf(log, " ");
+                    fprintf(log_file, " ");
                     break;
                 case 1:
-                    fprintf(log, "X");
+                    fprintf(log_file, "X");
                     break;
                 case 2:
-                    fprintf(log, "O");
+                    fprintf(log_file, "O");
                     break;
             }
 
-            fprintf(log, "|");
+            fprintf(log_file, "|");
         }
-        fprintf(log, "\n");
-        iterNode1 = iterNode1->down;
-        iterNode2 = iterNode1;
+        fprintf(log_file, "\n");
     }
 
-    fprintf(log, "\n");
+    fprintf(log_file, "\n");
 
-    fclose(log);
+    fclose(log_file);
 
 	return;
 }
