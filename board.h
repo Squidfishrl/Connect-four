@@ -1,6 +1,7 @@
 /* IMPORTED LIBRARIES */
 
 #include <stdio.h>
+#include <stdbool.h>
 #include <stdlib.h>
 
 /* -------------------------------------------------------------------------- */
@@ -19,6 +20,7 @@ struct node_t{
     struct node_t* right;
 
     short type;
+    bool winHiglight;
     /*
     0 - empty;
     1 - player 1
@@ -62,6 +64,14 @@ struct node_t* get_node_by_cords(struct matrix_t* matrix, int row, int column){
 // O(n), where n is the amount of nodes connected to the matrix
 void print_matrix(struct matrix_t* matrix){
 
+    system("clear");
+
+    char redColour[] = "\033[31m";
+    char blueColour[] = "\033[34m";
+    char greenColour[] = "\033[0;5m\033[32m"; //also flashing
+    char defaultColour[] = "\033[0m";
+    char *currentColour = defaultColour;
+
     // add numbers above the board
     printf("|");
     for(int i = 1; i <= matrix->columns; i++){
@@ -83,17 +93,32 @@ void print_matrix(struct matrix_t* matrix){
                 printf("|");
             }
 
+            if(iterNode2->winHiglight){
+                currentColour = greenColour;
+            }
+
             switch(iterNode2->type){
                 case 0:
                     printf(" ");
                     break;
                 case 1:
-                    printf("\033[31mX\033[0m"); // in red
+                    if(currentColour == defaultColour){
+                        currentColour = redColour;
+                    }
+                    printf("%sX", currentColour);
                     break;
                 case 2:
-                    printf("\033[0;34mO\033[0m"); // in blue
+                    if(currentColour == defaultColour){
+                        currentColour = blueColour;
+                    }
+                    printf("%sO", currentColour);
                     break;
             }
+
+            currentColour = defaultColour;
+            printf("%s", currentColour); // stop coloring
+
+
             printf("|");
         }
         printf("\n");
@@ -231,6 +256,7 @@ struct node_t* init_node(int row, int column, struct node_t* up, struct node_t* 
     initNode->left = left;
     initNode->right = right;
     initNode->type = 0;
+    initNode->winHiglight = false;
 
     return initNode;
 }

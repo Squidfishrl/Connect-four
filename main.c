@@ -42,17 +42,14 @@ void display_settings_menu(){
 
 void display_main_menu(){
 
-    /* possible text stylisations
-    // for(int i =0; i<100; i++){
-    //     printf("\033[0;%dm %d CONNECT FOUR \n", i, i);
-    // }
-    */
+
 
     int optionPick;
 
     do{
 
         system("clear");
+
 
         printf("\033[0;93m \033[1m CONNECT FOUR \033[0m ");
         printf("\n\n");

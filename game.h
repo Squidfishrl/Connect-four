@@ -41,8 +41,8 @@ void game_loop(struct matrix_t* matrix, char* log_name)
 	// Check win - Done
 
     // clear main menu
-    system("clear");
     print_matrix(matrix);
+
 	for (short i = 0; 1; player =  1 + !(player - 1), i++)
 	{
         while (1)
@@ -51,7 +51,6 @@ void game_loop(struct matrix_t* matrix, char* log_name)
 			scanf("%hd", &position);
 
             // clear board
-            system("clear");
           	position--;
 
 
@@ -83,6 +82,8 @@ void game_loop(struct matrix_t* matrix, char* log_name)
 
         // win condition
         if(check_win(matrix, player, position)){
+            print_matrix(matrix); // to highlight winning nodes
+
             printf("Player %hd wins!\n", player);
 
             //eats scanf newline
@@ -155,6 +156,11 @@ short check_win(struct matrix_t* matrix, short player, short position)
     for(piece_count = 1, node = start; node->up != NULL && node->up->type == player; node = node->up, piece_count++);
     for(node = start; node->down != NULL && node->down->type == player; node = node->down, piece_count++);
     if(piece_count >= 4){
+        // change win highlight
+        node->winHiglight = true; // current node
+
+        // linked nodes
+        for(; node->up != NULL && node->up->type == player; node = node->up, node->winHiglight = true);
         return 1;
     }
 
@@ -162,6 +168,9 @@ short check_win(struct matrix_t* matrix, short player, short position)
     for(piece_count = 1, node = start; node->left != NULL && node->left->type == player; node = node->left, piece_count++);
     for(node = start; node->right != NULL && node->right->type == player; node = node->right, piece_count++);
     if(piece_count >= 4){
+        // change win higlight
+        node->winHiglight = true; // current node
+        for(; node->left != NULL && node->left->type == player; node = node->left, node->winHiglight = true);
         return 1;
     }
 
@@ -169,6 +178,9 @@ short check_win(struct matrix_t* matrix, short player, short position)
     for(piece_count = 1, node = start; (node->left != NULL && node->left->up != NULL) && node->left->up->type == player; node = node->left->up, piece_count++);
     for(node = start; (node->right != NULL && node->right->down != NULL) && node->right->down->type == player; node = node->right->down, piece_count++);
     if(piece_count >= 4){
+        // change win higlight
+        node->winHiglight = true; // current node
+        for(; (node->left != NULL && node->left->up != NULL) && node->left->up->type == player; node = node->left->up, node->winHiglight = true);
         return 1;
     }
 
@@ -176,6 +188,9 @@ short check_win(struct matrix_t* matrix, short player, short position)
     for(piece_count = 1, node = start; (node->right != NULL && node->right->up != NULL) && node->right->up->type == player; node = node->right->up, piece_count++);
     for(node = start; (node->left != NULL && node->left->down != NULL) && node->left->down->type == player; node = node->left->down, piece_count++);
     if(piece_count >= 4){
+        // change win higlight
+        node->winHiglight = true; // current node
+        for(; (node->right != NULL && node->right->up != NULL) && node->right->up->type == player; node = node->right->up, node->winHiglight = true);
         return 1;
     }
 
