@@ -4,6 +4,9 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
+#include "colours.h"
+#include "settings.h"
+
 /* -------------------------------------------------------------------------- */
 
 
@@ -44,7 +47,7 @@ struct matrix_t{
 /* FUNCTION DECLARATIONS */
 
 struct node_t* get_node_by_cords(struct matrix_t* matrix, int row, int column);
-void print_matrix(struct matrix_t* matrix);
+void print_matrix(struct matrix_t* matrix, struct settings_t* settings, struct dict_t* colourDict);
 void free_matrix(struct matrix_t* matrix);
 struct matrix_t* create_matrix(int rows, int columns);
 struct matrix_t* init_matrix(int rows, int columns); // help function for create_matrix
@@ -62,15 +65,19 @@ struct node_t* get_node_by_cords(struct matrix_t* matrix, int row, int column){
 }
 
 // O(n), where n is the amount of nodes connected to the matrix
-void print_matrix(struct matrix_t* matrix){
-
+void print_matrix(struct matrix_t* matrix, struct settings_t* settings,struct dict_t* colourDict){
+    // TODO: make using settings more dynamic (array of players instead of seperate vars)
+    // TODO: also change settings->playerSettings->playerSettings->colour to str that holds the colour code
     system("clear");
 
-    char redColour[] = "\033[31m";
-    char blueColour[] = "\033[34m";
-    char greenColour[] = "\033[0;5m\033[32m"; //also 5m for flashing
-    char defaultColour[] = "\033[0m";
-    char *currentColour = defaultColour;
+    // fetch colours
+    const struct player_t* p1 = settings->playerSettings->playerSettings[0];
+    const char* p1Colour = binary_search_dict(p1->colour, colourDict);
+    const struct player_t* p2 = settings->playerSettings->playerSettings[1];
+    const char* p2Colour = binary_search_dict(p2->colour, colourDict);
+    const char* defColour = binary_search_dict('D', colourDict);
+    const char* winHighlightColour = binary_search_dict(settings->gameSettings.winHighlightColour, colourDict);
+    const char* flash = binary_search_dict('F', colourDict);
 
     // add numbers above the board
     printf("|");
@@ -94,7 +101,7 @@ void print_matrix(struct matrix_t* matrix){
             }
 
             if(iterNode2->winHiglight){
-                currentColour = greenColour;
+                printf("%s", winHighlightColour);
             }
 
             switch(iterNode2->type){
@@ -102,21 +109,22 @@ void print_matrix(struct matrix_t* matrix){
                     printf(" ");
                     break;
                 case 1:
-                    if(currentColour == defaultColour){
-                        currentColour = redColour;
+                    if(iterNode2->winHiglight){
+                        printf("%s%s%c", winHighlightColour, flash, p1->symbol);
+                    }else{
+                        printf("%s%c", p1Colour, p1->symbol);
                     }
-                    printf("%sX", currentColour);
                     break;
                 case 2:
-                    if(currentColour == defaultColour){
-                        currentColour = blueColour;
-                    }
-                    printf("%sO", currentColour);
-                    break;
+                if(iterNode2->winHiglight){
+                    printf("%s%s%c", winHighlightColour, flash, p2->symbol);
+                }else{
+                    printf("%s%c", p2Colour, p2->symbol);
+                }
+                break;
             }
 
-            currentColour = defaultColour;
-            printf("%s", currentColour); // stop coloring
+            printf("%s", defColour); // stop colouring
 
 
             printf("|");

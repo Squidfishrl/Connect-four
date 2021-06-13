@@ -1,18 +1,14 @@
 /* IMPORTED LIBRARIES */
 
-#include <stdio.h>
-#include <stdlib.h>
 #include "game.h"
-// also include game logic once its done
 
 /* -------------------------------------------------------------------------- */
 
 
 /* FUNCTION DECLARATIONS */
-
-void init(); // TODO: check if files such as settings and stats exist. if not create them
-void display_main_menu();
-void display_settings_menu();
+void init(); // starts main menu and prepares all needed vars
+void display_main_menu(struct settings_t* settings, struct dict_t* colourDict);
+void quit(struct settings_t* settings, struct dict_t* colourDict); // frees all rescources and quits  NOTE: add stats when done
 
 /* -------------------------------------------------------------------------- */
 
@@ -22,7 +18,7 @@ void display_settings_menu();
 int main(int argc, char const *argv[]) {
 
     // init
-    display_main_menu();
+    init();
 
     return 0;
 }
@@ -32,43 +28,58 @@ int main(int argc, char const *argv[]) {
 
 /* FUNCTION DEFINITIONS */
 
-void display_settings_menu(){
-    /*
-        TODO: read settings file - display settings in a similar way to main menu
-        TODO: select settings and be able to change values (with error handling)
-        TODO: also add 0) Back -> essentially does: return;
-    */
+void quit(struct settings_t* settings, struct dict_t* colourDict){
+    free_settings(settings);
+    free_dict(colourDict);
 }
 
-void display_main_menu(){
+void init(){
 
+    // get settings
+    struct settings_t* settings = init_settings("settings.bin");
+    // get stats
+    // TODO:
+    // get colour dict
+    struct dict_t* colourDict = init_colour_dict();
 
+    // launch main menu
+    display_main_menu(settings, colourDict);
 
-    int optionPick;
+    // after main menu quit -> free all rescources
+    quit(settings, colourDict);
+}
+
+void display_main_menu(struct settings_t* settings, struct dict_t* colourDict){
+
+    short optionPick;
+
+    const char *yellow, *def, *flashing, *white, *heavy;
+    yellow = binary_search_dict('Y', colourDict);
+    def = binary_search_dict('D', colourDict);
+    flashing = binary_search_dict('F', colourDict);
+    white = binary_search_dict('W', colourDict);
+    heavy = binary_search_dict('H', colourDict);
 
     do{
 
         system("clear");
 
 
-        printf("\033[0;93m \033[1m CONNECT FOUR \033[0m ");
+        printf("%s%s CONNECT FOUR %s", heavy, yellow, def);
         printf("\n\n");
-        printf(" \033[0;5m-\033[0m\033[0;97m 1) NEW GAME \033[0m \n");
-        printf(" \033[0;5m-\033[0m\033[0;97m 2) STATS \033[0m \n");
-        printf(" \033[0;5m-\033[0m\033[0;97m 3) SETTINGS \033[0m \n");
-        printf(" \033[0;5m-\033[0m\033[0;97m 4) QUIT \033[0m \n");
-
+        printf(" %s-%s%s 1) NEW GAME %s \n", flashing, def, white, def);
+        printf(" %s-%s%s 2) STATS %s \n", flashing, def, white, def);
+        printf(" %s-%s%s 3) SETTINGS %s \n", flashing, def, white, def);
+        printf(" %s-%s%s 4) QUIT %s \n", flashing, def, white, def);
         printf(" \n go to: ");
 
 
-        scanf("%d", &optionPick);
+        scanf("%hd", &optionPick);
 
         switch(optionPick){
 
-            case 1: // new game
-                struct matrix_t* matrix = create_matrix(20, 7);
-                char str[] = "log.log";
-                game_loop(matrix, str);
+            case 1: // new game;
+                game_loop(settings, colourDict);
                 break;
             case 2: // stats
                 // TODO: once game loop is done, track different stats during game loop (add a struct for it and save as binary file)
@@ -82,7 +93,7 @@ void display_main_menu(){
                 break;
             default:
                 printf("Error - invalid option \n\n");
-                break; // not needed but whatever
+                break;
         }
 
     }while(optionPick != 4);

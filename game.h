@@ -11,7 +11,7 @@
 
 /* FUNCTION DECLARATIONS */
 
-void game_loop(struct matrix_t* matrix, char* log_name);
+void game_loop(struct settings_t* settings, struct dict_t* colourDict);
 short add_piece(struct matrix_t* matrix, short player, short position);
 short check_win(struct matrix_t* matrix, short player, short position);
 void log_moves(struct matrix_t* matrix, short moves[], short max_moves, char *log_name);
@@ -21,8 +21,11 @@ void log_moves(struct matrix_t* matrix, short moves[], short max_moves, char *lo
 
 /* FUNCTION DEFINITIONS */
 
-void game_loop(struct matrix_t* matrix, char* log_name)
+void game_loop(struct settings_t* settings, struct dict_t* colourDict)
 {
+    struct matrix_t* matrix = create_matrix(settings->gameSettings.boardRows, settings->gameSettings.boardColumns);
+    char* log_name = settings->fileSettings.logFileName;
+
 	short player = 1;
 	short position = 0;
 
@@ -38,7 +41,7 @@ void game_loop(struct matrix_t* matrix, char* log_name)
 	// Display matrix - Done
 	// Check win - Done
 
-    print_matrix(matrix);
+    print_matrix(matrix, settings, colourDict);
 
 	for (short i = 0; 1; player =  1 + !(player - 1), i++)
 	{
@@ -72,14 +75,14 @@ void game_loop(struct matrix_t* matrix, char* log_name)
 		moves[i] = position+1;
 
         printf("\n %d/%d \n\n", i+1, max_moves);
-        print_matrix(matrix);
+        print_matrix(matrix, settings, colourDict);
 
 
 
         // win condition
         if(check_win(matrix, player, position)){
 
-            print_matrix(matrix); // to highlight winning nodes
+            print_matrix(matrix, settings, colourDict); // to highlight winning nodes
             log_moves(matrix, moves, max_moves, log_name);
             printf("Player %hd wins!\n", player);
 
@@ -195,7 +198,7 @@ void log_moves(struct matrix_t* matrix, short moves[], short max_moves, char* lo
 
 	if ((log_file = fopen(log_name, "a")));			// Try to open file
 	else if ((log_file = fopen(log_name, "w+")));	// File doesn't exist; try to create it
-	else										// Cannot create file
+	else										// Can't create file
 	{
 		printf("Failed to create or open log_file file!\n");
 		return;

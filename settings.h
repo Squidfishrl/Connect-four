@@ -20,7 +20,7 @@ struct gameSettings_t{
     const short maxRows; // 20
     const short maxColumns; // 40
 
-    bool againstBot; // TODO: add bot option, simple algorythm O(columns^2depth)
+    bool againstBot; // TODO: add bot option, simple algorithm (minmax) O(columns^depth)
     uint8_t botDepth;
 
     bool multiplayerMode; // f -> local; t -> TODO: socket connection
@@ -36,7 +36,7 @@ struct gameSettings_t{
 
 };
 
-struct fileSettings_t{
+struct fileSettings_t{ // maybe make a var that determines max filename length
     char logFileName[31]; // should be private and always log but rules disagree..
     uint8_t logFileNameLen;
     char settingsFileName[31]; // following that logic
@@ -72,18 +72,22 @@ struct settings_t{
 struct settings_t* init_settings(char* fileName);
 struct settings_t* define_settings(); // create default settings
 bool read_settings(char* fileName, struct settings_t* settings);
-bool change_setting(struct settings_t* settings, short settingNO); // NOTE: if editing player settings and adding a setting for a new player, check if the player is actually new or not
+bool change_setting(struct settings_t* settings, short settingNO); // TODO: NOTE: if editing player settings and adding a setting for a new player, check if the player is actually new or not
 bool write_settings(char* fileName, struct settings_t* settings);
-void display_settings_menu(struct settings_t* settings); // could add filename depending what I do in it
-void free_settings(struct settings_t* settings);
+void display_settings_menu(struct settings_t* settings); // TODO: could add filename depending what I do in it
+void free_settings(struct settings_t* settings); // TODO:
 
 /* -------------------------------------------------------------------------- */
 
 
 /* FUNCTION DEFINITIONS */
 
+void free_settings(struct settings_t* settings){
+    // TODO:
+}
+
 bool read_settings(char* fileName, struct settings_t* settings){
-    // TODO: cant read anything when it comes to the array - fix
+
     FILE* settingsFile;
 
     if((settingsFile = fopen(fileName, "rb"))){
@@ -226,7 +230,7 @@ struct settings_t* define_settings(){
     // player 2
     playerSettings->playerSettings[1] = (struct player_t*)malloc(sizeof(struct player_t));
     playerSettings->playerSettings[1]->number = 2;
-    playerSettings->playerSettings[1]->colour = 'B';
+    playerSettings->playerSettings[1]->colour = 'S';
     playerSettings->playerSettings[1]->symbol = 'O';
 
     // default values for file settings
@@ -246,6 +250,9 @@ struct settings_t* define_settings(){
 }
 
 void display_settings_menu(struct settings_t* settings){
+
+    short optionPick;
+
     printf("GAME SETTINGS\n\n");
     printf("board rows - %hd\n", settings->gameSettings.boardRows);
     printf("board columns - %hd\n\n", settings->gameSettings.boardColumns);
