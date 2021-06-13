@@ -4,7 +4,6 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
-#include "colours.h"
 #include "settings.h"
 
 /* -------------------------------------------------------------------------- */
@@ -66,15 +65,10 @@ struct node_t* get_node_by_cords(struct matrix_t* matrix, int row, int column){
 
 // O(n), where n is the amount of nodes connected to the matrix
 void print_matrix(struct matrix_t* matrix, struct settings_t* settings,struct dict_t* colourDict){
-    // TODO: make using settings more dynamic (array of players instead of seperate vars)
-    // TODO: also change settings->playerSettings->playerSettings->colour to str that holds the colour code
+
     system("clear");
 
     // fetch colours
-    const struct player_t* p1 = settings->playerSettings->playerSettings[0];
-    const char* p1Colour = binary_search_dict(p1->colour, colourDict);
-    const struct player_t* p2 = settings->playerSettings->playerSettings[1];
-    const char* p2Colour = binary_search_dict(p2->colour, colourDict);
     const char* defColour = binary_search_dict('D', colourDict);
     const char* winHighlightColour = binary_search_dict(settings->gameSettings.winHighlightColour, colourDict);
     const char* flash = binary_search_dict('F', colourDict);
@@ -100,33 +94,23 @@ void print_matrix(struct matrix_t* matrix, struct settings_t* settings,struct di
                 printf("|");
             }
 
-            if(iterNode2->winHiglight){
-                printf("%s", winHighlightColour);
-            }
-
-            switch(iterNode2->type){
-                case 0:
-                    printf(" ");
-                    break;
-                case 1:
-                    if(iterNode2->winHiglight){
-                        printf("%s%s%c", winHighlightColour, flash, p1->symbol);
-                    }else{
-                        printf("%s%c", p1Colour, p1->symbol);
-                    }
-                    break;
-                case 2:
+            // if empty nodes(no pieces)
+            if(iterNode2->type == 0){
+                printf(" ");
+            }else if(iterNode2->type <= settings->playerSettings->playerArrSize){
+                // if winning node
                 if(iterNode2->winHiglight){
-                    printf("%s%s%c", winHighlightColour, flash, p2->symbol);
+                    //print colour->flash->symbol
+                    printf("%s%s%c", winHighlightColour, flash, settings->playerSettings->playerSettings[iterNode2->type - 1]->symbol);
                 }else{
-                    printf("%s%c", p2Colour, p2->symbol);
+                    // print colour -> symbol
+                    printf("%s%c", settings->playerSettings->playerSettings[iterNode2->type - 1]->colourCode, settings->playerSettings->playerSettings[iterNode2->type - 1]->symbol);
                 }
-                break;
+            }else{
+                printf("this should be impossible but ok");
             }
 
             printf("%s", defColour); // stop colouring
-
-
             printf("|");
         }
         printf("\n");

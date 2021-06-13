@@ -35,12 +35,13 @@ void quit(struct settings_t* settings, struct dict_t* colourDict){
 
 void init(){
 
-    // get settings
-    struct settings_t* settings = init_settings("settings.bin");
-    // get stats
-    // TODO:
     // get colour dict
     struct dict_t* colourDict = init_colour_dict();
+    // get settings
+    struct settings_t* settings = init_settings("settings.bin", colourDict);
+    // get stats
+    // TODO:
+
 
     // launch main menu
     display_main_menu(settings, colourDict);

@@ -7,6 +7,8 @@
 #include <unistd.h>
 #include <stdint.h>
 
+#include "colours.h"
+
 /* -------------------------------------------------------------------------- */
 
 
@@ -36,13 +38,16 @@ struct gameSettings_t{
 
 };
 
-struct fileSettings_t{ // maybe make a var that determines max filename length
-    char logFileName[31]; // should be private and always log but rules disagree..
+struct fileSettings_t{
+
     uint8_t logFileNameLen;
-    char settingsFileName[31]; // following that logic
+    char logFileName[31]; // should be private and always log but rules disagree..
+
     uint8_t settingsFileNameLen;
-    char statsFileName[31];
+    char settingsFileName[31]; // following that logic
+
     uint8_t statsFileNameLen;
+    char statsFileName[31];
 };
 
 struct player_t{
@@ -51,6 +56,9 @@ struct player_t{
     uint8_t number;
     char colour;
     char symbol;
+
+    uint8_t colourCodeLen; // even tho its a str (ending in '\0') fread doesn't care
+    char colourCode[10]; // would be nice if it could be a pointer but I keep getting fread errors when it is
 };
 
 struct playerSettings_t{
@@ -69,8 +77,8 @@ struct settings_t{
 
 /* FUNCTION DECLARATIONS */
 
-struct settings_t* init_settings(char* fileName);
-struct settings_t* define_settings(); // create default settings
+struct settings_t* init_settings(char* fileName, struct dict_t* colourDict);
+struct settings_t* define_settings(struct dict_t* colourDict); // create default settings
 bool read_settings(char* fileName, struct settings_t* settings);
 bool change_setting(struct settings_t* settings, short settingNO); // TODO: NOTE: if editing player settings and adding a setting for a new player, check if the player is actually new or not
 bool write_settings(char* fileName, struct settings_t* settings);
@@ -95,14 +103,24 @@ bool read_settings(char* fileName, struct settings_t* settings){
         fread(&settings->gameSettings, sizeof(struct gameSettings_t), 1, settingsFile);
 
         // read player settings
+
+        // allocate memory for player settings and start reading them
         settings->playerSettings = (struct playerSettings_t*)malloc(sizeof(struct playerSettings_t));
+
+        // read arr size
         fread(&settings->playerSettings->playerArrSize, sizeof(uint8_t), 1, settingsFile);
+
+        // allocate memory for playerSettings->playerSettings
         settings->playerSettings->playerSettings = (struct player_t**)malloc(settings->playerSettings->playerArrSize * sizeof(struct player_t*));
+
+        // allocate player_t  for each playerand read vars
         for(short i = 0; i<settings->playerSettings->playerArrSize; i++){
             settings->playerSettings->playerSettings[i] = (struct player_t*)malloc(sizeof(struct player_t));
             fread(&settings->playerSettings->playerSettings[i]->number, sizeof(uint8_t), 1, settingsFile);
             fread(&settings->playerSettings->playerSettings[i]->colour, sizeof(char), 1, settingsFile);
             fread(&settings->playerSettings->playerSettings[i]->symbol, sizeof(char), 1, settingsFile);
+            fread(&settings->playerSettings->playerSettings[i]->colourCodeLen, sizeof(uint8_t), 1, settingsFile);
+            fread(settings->playerSettings->playerSettings[i]->colourCode, sizeof(char), settings->playerSettings->playerSettings[i]->colourCodeLen + 1, settingsFile);
         }
 
         // read file settings
@@ -143,6 +161,8 @@ bool write_settings(char* fileName, struct settings_t* settings){
             fwrite(&settings->playerSettings->playerSettings[i]->number, sizeof(uint8_t), 1, settingsFile);
             fwrite(&settings->playerSettings->playerSettings[i]->colour, sizeof(char), 1, settingsFile);
             fwrite(&settings->playerSettings->playerSettings[i]->symbol, sizeof(char), 1, settingsFile);
+            fwrite(&settings->playerSettings->playerSettings[i]->colourCodeLen, sizeof(uint8_t), 1, settingsFile);
+            fwrite(settings->playerSettings->playerSettings[i]->colourCode, sizeof(char), settings->playerSettings->playerSettings[i]->colourCodeLen, settingsFile);
         }
 
         // write file settings
@@ -154,7 +174,6 @@ bool write_settings(char* fileName, struct settings_t* settings){
         // settings
         fwrite(&settings->fileSettings.settingsFileNameLen, sizeof(uint8_t), 1, settingsFile);
         fwrite(settings->fileSettings.settingsFileName, sizeof(char), settings->fileSettings.settingsFileNameLen + 1, settingsFile);
-
 
         //stats
         fwrite(&settings->fileSettings.statsFileNameLen, sizeof(uint8_t), 1, settingsFile);
@@ -170,7 +189,7 @@ bool write_settings(char* fileName, struct settings_t* settings){
     return true;
 }
 
-struct settings_t* init_settings(char* fileName){
+struct settings_t* init_settings(char* fileName, struct dict_t* colourDict){
 
     struct settings_t* settings;
 
@@ -188,7 +207,7 @@ struct settings_t* init_settings(char* fileName){
     }else{
         //file doesn't exist
 
-        settings = define_settings();
+        settings = define_settings(colourDict);
         if(!write_settings(fileName, settings)){
             printf("Failed to create or open settings file!\n");
         }
@@ -197,7 +216,7 @@ struct settings_t* init_settings(char* fileName){
     return settings;
 }
 
-struct settings_t* define_settings(){
+struct settings_t* define_settings(struct dict_t* colourDict){
 
     struct gameSettings_t gameSettings = {.maxRows = 20, .maxColumns = 40, .maxPlayers=9};
     struct playerSettings_t* playerSettings = (struct playerSettings_t*)malloc(sizeof(struct playerSettings_t));
@@ -219,26 +238,35 @@ struct settings_t* define_settings(){
     playerSettings->playerArrSize = 2;
     playerSettings->playerSettings = (struct player_t**)malloc(playerSettings->playerArrSize * sizeof(struct player_t*));
 
-    // TODO: add a seperate file for console colors -> like a hashmap with functions
 
     // player 1
     playerSettings->playerSettings[0] = (struct player_t*)malloc(sizeof(struct player_t));
     playerSettings->playerSettings[0]->number = 1;
     playerSettings->playerSettings[0]->colour = 'R';
     playerSettings->playerSettings[0]->symbol = 'X';
+    strcpy(playerSettings->playerSettings[0]->colourCode, binary_search_dict(playerSettings->playerSettings[0]->colour, colourDict));
+    // playerSettings->playerSettings[0]->colourCode = binary_search_dict(playerSettings->playerSettings[0]->colour, colourDict);
+    playerSettings->playerSettings[0]->colourCodeLen = strlen(playerSettings->playerSettings[0]->colourCode);
 
     // player 2
     playerSettings->playerSettings[1] = (struct player_t*)malloc(sizeof(struct player_t));
     playerSettings->playerSettings[1]->number = 2;
     playerSettings->playerSettings[1]->colour = 'S';
     playerSettings->playerSettings[1]->symbol = 'O';
+    strcpy(playerSettings->playerSettings[1]->colourCode, binary_search_dict(playerSettings->playerSettings[1]->colour, colourDict));
+    // playerSettings->playerSettings[1]->colourCode = binary_search_dict(playerSettings->playerSettings[1]->colour, colourDict);
+    playerSettings->playerSettings[1]->colourCodeLen = strlen(playerSettings->playerSettings[1]->colourCode);
 
     // default values for file settings
+
     strcpy(fileSettings.logFileName, "log.txt\0");
+    // fileSettings.logFileName = "log.txt\0";
     fileSettings.logFileNameLen = strlen(fileSettings.logFileName);
-    strcpy(fileSettings.settingsFileName, "settings.bin\0");
+    strcpy(fileSettings.logFileName, "log.txt\0");
+    // fileSettings.settingsFileName = "settings.bin\0";
     fileSettings.settingsFileNameLen = strlen(fileSettings.settingsFileName);
-    strcpy(fileSettings.statsFileName, "stats.bin\0");
+    strcpy(fileSettings.logFileName, "log.txt\0");
+    // fileSettings.statsFileName = "stats.bin\0";
     fileSettings.statsFileNameLen = strlen(fileSettings.statsFileName);
 
     // memcpy because gameSettings has const vars and cant assign it
