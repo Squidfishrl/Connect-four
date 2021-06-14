@@ -52,7 +52,7 @@ void init(){
 
 void display_main_menu(struct settings_t* settings, struct dict_t* colourDict){
 
-    short optionPick;
+    short menuNO;
 
     const char *yellow, *def, *flashing, *white, *heavy;
     yellow = binary_search_dict('Y', colourDict);
@@ -61,23 +61,40 @@ void display_main_menu(struct settings_t* settings, struct dict_t* colourDict){
     white = binary_search_dict('W', colourDict);
     heavy = binary_search_dict('H', colourDict);
 
+    int inputBufferRead;
+
     do{
+
 
         system("clear");
 
 
         printf("%s%s CONNECT FOUR %s", heavy, yellow, def);
+        printf("%s (main-menu) %s", yellow, def);
         printf("\n\n");
         printf(" %s-%s%s 1) NEW GAME %s \n", flashing, def, white, def);
         printf(" %s-%s%s 2) STATS %s \n", flashing, def, white, def);
         printf(" %s-%s%s 3) SETTINGS %s \n", flashing, def, white, def);
         printf(" %s-%s%s 4) QUIT %s \n", flashing, def, white, def);
+
+        // not in do while loop to allow error msg
         printf(" \n go to: ");
+        scanf("%hd", &menuNO);
+        inputBufferRead = getchar();
 
+        // check if input was valid - if not scanf again
+        while((inputBufferRead == EOF || inputBufferRead != '\n') || (menuNO < 1 || menuNO > 4)){
 
-        scanf("%hd", &optionPick);
+            //TODO: if more than 1 char was entered clear stdin buffer (so that invalid input msg isn't printed multiple times) and port to all input validation
 
-        switch(optionPick){
+            printf("\n Invalid input! Try again\n go to (1-4): ");
+            scanf("%hd", &menuNO);
+            inputBufferRead = getchar();
+        }
+
+        // scanf("%hd", &menuNO);
+
+        switch(menuNO){
 
             case 1: // new game;
                 game_loop(settings, colourDict);
@@ -87,21 +104,18 @@ void display_main_menu(struct settings_t* settings, struct dict_t* colourDict){
                 // TODO: this displays them
                 break;
             case 3: // settings
-                display_settings_menu(settings);
-                // display_settings_menu();
+                display_settings_menu(settings, colourDict);
                 break;
             case 4: // quit
-                printf("Exiting program!");
+                printf("Exiting program!\n");
                 break;
             default:
+                // shouldnt be possible and if it is printf wouldnt be seen
                 printf("Error - invalid option \n\n");
                 break;
         }
 
-    }while(optionPick != 4);
-
-
-
+    }while(menuNO != 4);
 
 }
 

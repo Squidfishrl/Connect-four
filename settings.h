@@ -16,19 +16,21 @@
 
 struct gameSettings_t{
 
-    uint8_t boardRows;
-    uint8_t boardColumns;
+    short boardRows;
+    short boardColumns;
 
     const short maxRows; // 20
     const short maxColumns; // 40
 
+    short connectAmount; // how many nodes to connect for a win
+
     bool againstBot; // TODO: add bot option, simple algorithm (minmax) O(columns^depth)
-    uint8_t botDepth;
+    short botDepth;
 
-    bool multiplayerMode; // f -> local; t -> TODO: socket connection
+    bool multiplayer; // f -> local; t -> TODO: socket connection
 
-    uint8_t playerAmount; // rewrite to feature more players
-    const uint8_t maxPlayers;
+    short playerAmount; // rewrite to feature more players
+    const short maxPlayers;
 
     char winHighlightColour;
 
@@ -58,7 +60,7 @@ struct player_t{
     char symbol;
 
     uint8_t colourCodeLen; // even tho its a str (ending in '\0') fread doesn't care
-    char colourCode[6]; // would be nice if it could be a pointer but I keep getting fread errors when it is
+    char colourCode[10]; // would be nice if it could be a pointer but I keep getting fread errors when it is
 };
 
 struct playerSettings_t{
@@ -82,8 +84,10 @@ struct settings_t* define_settings(struct dict_t* colourDict); // create default
 bool read_settings(char* fileName, struct settings_t* settings);
 bool change_setting(struct settings_t* settings, short settingNO); // TODO: NOTE: if editing player settings and adding a setting for a new player, check if the player is actually new or not
 bool write_settings(char* fileName, struct settings_t* settings);
-void display_settings_menu(struct settings_t* settings); // TODO: could add filename depending what I do in it
 void free_settings(struct settings_t* settings); // TODO:
+
+void display_settings_menu(struct settings_t* settings, struct dict_t* colourDict); // TODO: could add filename depending what I do in it
+bool display_game_settings_menu(struct settings_t* settings, struct dict_t* colourDict); // returns if changes were made
 
 /* -------------------------------------------------------------------------- */
 
@@ -226,11 +230,12 @@ struct settings_t* define_settings(struct dict_t* colourDict){
 
 
     // default values for game settings
-    gameSettings.boardRows = 6;
-    gameSettings.boardColumns = 7;
+    gameSettings.boardRows = 20;
+    gameSettings.boardColumns = 16;
+    gameSettings.connectAmount = 4;
     gameSettings.againstBot = false;
     gameSettings.botDepth = 4; // O(40^4) worst case
-    gameSettings.multiplayerMode = false;
+    gameSettings.multiplayer = false;
     gameSettings.playerAmount = 2;
     gameSettings.winHighlightColour = 'G';
 
@@ -275,45 +280,224 @@ struct settings_t* define_settings(struct dict_t* colourDict){
     settings->playerSettings = playerSettings;
     settings->fileSettings = fileSettings;
 
-    display_settings_menu(settings);
     printf("\n\n\n");
     return settings;
 }
 
-void display_settings_menu(struct settings_t* settings){
+void display_settings_menu(struct settings_t* settings, struct dict_t* colourDict){
 
-    short optionPick;
+    short settingsNO;
+    const char *flash, *white, *def, *yellow, *heavy;
+    flash = binary_search_dict('F', colourDict);
+    white = binary_search_dict('W', colourDict);
+    def = binary_search_dict('D', colourDict);
+    heavy = binary_search_dict('H', colourDict);
+    yellow = binary_search_dict('Y', colourDict);
+    char inputBufferRead;
+    bool changedSettings = false;
 
-    printf("GAME SETTINGS\n\n");
-    printf("board rows - %hd\n", settings->gameSettings.boardRows);
-    printf("board columns - %hd\n\n", settings->gameSettings.boardColumns);
-    printf("max rows - %hd\n", settings->gameSettings.maxRows);
-    printf("max columns - %hd\n\n", settings->gameSettings.maxColumns);
-    printf("against bot - %hd\n", settings->gameSettings.againstBot);
-    printf("bot depth - %hd\n\n", settings->gameSettings.botDepth);
-    printf("multiplayer mode - %hd\n\n", settings->gameSettings.multiplayerMode);
-    printf("player amount - %hd\n\n\n\n", settings->gameSettings.playerAmount);
+    while(1){
+
+        system("clear");
+        printf("%s%s CONNECT FOUR %s", heavy, yellow, def);
+        printf("%s (settings) %s\n\n", yellow, def);
+        printf(" %s-%s%s 1) GAME SETTINGS%s\n", flash, def, white, def);
+        printf(" %s-%s%s 2) PLAYER SETTINGS%s\n", flash, def, white, def);
+        printf(" %s-%s%s 3) FILE SETTINGS%s\n", flash, def, white, def);
+        printf(" %s-%s%s 4) BACK%s\n", flash, def, white, def);
+
+        // printf("player arr size - %hd\n\n", settings->playerSettings->playerArrSize);
+        //
+        // for(short i =0; i<settings->playerSettings->playerArrSize; i++){
+        //     printf("player %hd\n", settings->playerSettings->playerSettings[i]->number);
+        //     printf("player colour - %c\n", settings->playerSettings->playerSettings[i]->colour);
+        //     printf("player symbol - %c\n\n", settings->playerSettings->playerSettings[i]->symbol);
+        // }
+        // printf("\n\n");
 
 
-    printf("PLAYER SETTINGS\n\n");
+        // printf("log filename - %s\n", settings->fileSettings.logFileName);
+        // printf("settings filename - %s\n", settings->fileSettings.settingsFileName);
+        // printf("stats filename - %s\n", settings->fileSettings.statsFileName);
 
-    printf("player arr size - %hd\n\n", settings->playerSettings->playerArrSize);
+        // not in do while loop to allow error msg;
 
-    for(short i =0; i<settings->playerSettings->playerArrSize; i++){
-        printf("player %hd\n", settings->playerSettings->playerSettings[i]->number);
-        printf("player colour - %c\n", settings->playerSettings->playerSettings[i]->colour);
-        printf("player symbol - %c\n\n", settings->playerSettings->playerSettings[i]->symbol);
+
+        printf(" \n go to: ");
+        scanf("%hd", &settingsNO);
+        inputBufferRead = getchar();
+
+        // check if input was valid - if not scanf again
+        while((inputBufferRead == EOF || inputBufferRead != '\n') || (settingsNO < 1 || settingsNO > 4)){
+            printf("\n Invalid input! Try again\n go to (1-4): ");
+            scanf("%hd", &settingsNO);
+            inputBufferRead = getchar();
+        }
+
+
+        switch(settingsNO){
+            case 1:
+                if(display_game_settings_menu(settings, colourDict)){
+                    changedSettings = true;
+                };
+                break;
+            case 2:
+
+                break;
+            case 3:
+
+                break;
+            case 4:
+                if(changedSettings){
+                    write_settings(settings->fileSettings.settingsFileName, settings);
+                }
+                return;
+            default:
+                // shouldn't be possible
+                break;
+        }
     }
-    printf("\n\n");
 
-    printf("FILE SETTINGS\n\n");
-    printf("log filename - %s\n", settings->fileSettings.logFileName);
-    printf("settings filename - %s\n", settings->fileSettings.settingsFileName);
-    printf("stats filename - %s\n", settings->fileSettings.statsFileName);
+    return;
+}
 
-    scanf("%d", &optionPick);
-    getchar();
-    getchar();
+bool display_game_settings_menu(struct settings_t* settings, struct dict_t* colourDict){
+
+    short settingsNO = -1;
+    const char *flash, *white, *def, *yellow, *heavy;
+    flash = binary_search_dict('F', colourDict);
+    white = binary_search_dict('W', colourDict);
+    def = binary_search_dict('D', colourDict);
+    heavy = binary_search_dict('H', colourDict);
+    yellow = binary_search_dict('Y', colourDict);
+    char inputBufferRead;
+    bool settingsChange = true; // TODO: change to false once scanf validation funct
+    short holdInt; // used for scanf on bools
+
+    while(1){
+
+        system("clear");
+
+        printf("%s%s CONNECT FOUR %s", heavy, yellow, def);
+        printf("%s (game-settings) %s\n\n", yellow, def);
+
+        printf(" %s-%s%s 1) board rows - %hd%s\n", flash, def, white, settings->gameSettings.boardRows, def);
+        printf(" %s-%s%s 2) board columns - %hd%s\n", flash, def, white, settings->gameSettings.boardColumns, def);
+        printf(" %s-%s%s 3) connect amount - %hd%s\n", flash, def, white, settings->gameSettings.connectAmount, def);
+        // printf(" %s-%s max rows - %hd\n", settings->gameSettings.maxRows);
+        // printf(" %s-%s max columns - %hd\n\n", settings->gameSettings.maxColumns);
+        printf(" %s-%s%s 4) against bot - %hd%s\n", flash, def, white, settings->gameSettings.againstBot, def);
+        printf(" %s-%s%s 5) bot depth - %hd%s\n", flash, def, white, settings->gameSettings.botDepth, def);
+        printf(" %s-%s%s 6) multiplayer mode - %hd%s\n", flash, def, white, settings->gameSettings.multiplayer, def);
+        printf(" %s-%s%s 7) player amount - %hd%s\n", flash, def, white, settings->gameSettings.playerAmount, def);
+        printf(" %s-%s%s 8) BACK %s\n", flash, def, white, def);
+
+        printf("\n go to: ");
+        scanf("%hd", &settingsNO);
+        inputBufferRead = getchar();
+
+        // check if input was valid - if not scanf again
+        while((inputBufferRead == EOF || inputBufferRead != '\n') || (settingsNO < 1 || settingsNO > 8)){
+            printf("\n Invalid input! Try again\n go to (1-8): ");
+            scanf("%hd", &settingsNO);
+            inputBufferRead = getchar();
+        }
+
+        system("clear");
+
+        printf("%s%s CONNECT FOUR %s", heavy, yellow, def);
+        printf("%s (game-settings-configurations) %s\n\n", yellow, def);
+
+        switch(settingsNO){ // TODO: add minvalue to board row/column
+            // name - description - acceptable values
+            case 1:
+                printf("%s%s NAME: %s board rows\n", heavy, white, def);
+                printf("%s%s DESCRIPTION: %s Sets the rows (height) of the board.\n", heavy, white, def);
+                printf("%s%s VALUE RANGE: %s (4-%hd)\n", heavy, white, def, settings->gameSettings.maxRows);
+                printf("%s%s CURRENT VALUE: %s %hd\n", heavy, white, def, settings->gameSettings.boardRows);
+
+                printf("%s%s NEW VALUE: %s ", heavy, white, def); // TODO: scanfVal function which does scanf loop until escape or correct input
+                // TODO: minvalue to all gameboard settings
+                scanf("%hd", &settings->gameSettings.boardRows); // uint8 = unsigned char
+                break;
+
+            case 2:
+                printf("%s%s NAME: %s board columns\n", heavy, white, def);
+                printf("%s%s DESCRIPTION: %s Sets the columns (width) of the board.\n", heavy, white, def);
+                printf("%s%s VALUE RANGE: %s (4-%hd)\n", heavy, white, def, settings->gameSettings.maxColumns);
+                printf("%s%s CURRENT VALUE: %s %hd\n", heavy, white, def, settings->gameSettings.boardColumns);
+
+                printf("\n%s%s NEW VALUE: %s ", heavy, white, def);
+                scanf("%hd", &settings->gameSettings.boardColumns); // add checks with scanfVal function
+
+                break;
+
+            case 3:
+                printf("%s%s NAME: %s board columns\n", heavy, white, def);
+                printf("%s%s DESCRIPTION: %s Sets the columns (width) of the board.\n", heavy, white, def);
+                printf("%s%s VALUE RANGE: %s (3-8)\n", heavy, white, def);
+                printf("%s%s CURRENT VALUE: %s %hd\n", heavy, white, def, settings->gameSettings.connectAmount);
+
+                printf("\n%s%s NEW VALUE: %s ", heavy, white, def);
+                scanf("%hd", &settings->gameSettings.connectAmount); // add checks with scanfVal function
+
+                break;
+            case 4:
+                printf("%s%s NAME: %s against bot\n", heavy, white, def);
+                printf("%s%s DESCRIPTION: %s [WIP]Sets your opponents to bots.\n", heavy, white, def);
+                printf("%s%s VALUE RANGE: %s (0-1)\n", heavy, white, def);
+                printf("%s%s CURRENT VALUE: %s %hd\n", heavy, white, def, settings->gameSettings.againstBot);
+
+                printf("\n%s%s NEW VALUE: %s ", heavy, white, def);
+
+                scanf("%hd", &holdInt); // add checks with scanfVal function
+                settings->gameSettings.againstBot = holdInt;
+
+                break;
+            case 5:
+                printf("%s%s NAME: %s bot depth\n", heavy, white, def);
+                printf("%s%s DESCRIPTION: %s Changes how many moves the bot calculates. Scales exponentially\n", heavy, white, def);
+                printf("%s%s VALUE RANGE: %s (1-16)\n", heavy, white, def);
+                printf("%s%s CURRENT VALUE: %s %hd\n", heavy, white, def, settings->gameSettings.botDepth);
+
+                printf("\n%s%s NEW VALUE: %s ", heavy, white, def);
+                scanf("%hd", &settings->gameSettings.botDepth); // add checks with scanfVal function
+
+                break;
+            case 6:
+                printf("%s%s NAME: %s multiplayer\n", heavy, white, def);
+                printf("%s%s DESCRIPTION: %s [WIP]Allows playing online via socket connections.\n", heavy, white, def);
+                printf("%s%s VALUE RANGE: %s (0-1)\n", heavy, white, def);
+                printf("%s%s CURRENT VALUE: %s %hd\n", heavy, white, def, settings->gameSettings.multiplayer);
+
+                printf("\n%s%s NEW VALUE: %s ", heavy, white, def);
+                short holdInt;
+                scanf("%hd", &holdInt); // add checks with scanfVal function
+                settings->gameSettings.multiplayer = holdInt;
+
+
+                break;
+            case 7:
+                printf("%s%s NAME: %s player amount\n", heavy, white, def);
+                printf("%s%s DESCRIPTION: %s [WIP]Sets the amount of players in a game.\n", heavy, white, def);
+                printf("%s%s VALUE RANGE: %s (2-9)\n", heavy, white, def);
+                printf("%s%s CURRENT VALUE: %s %hd\n", heavy, white, def, settings->gameSettings.playerAmount);
+
+                printf("\n%s%s NEW VALUE: %s ", heavy, white, def);
+                scanf("%hd", &settings->gameSettings.playerAmount); // add checks with scanfVal function
+                break;
+            case 8:
+                return settingsChange;
+                // break;
+
+        }
+
+        getchar(); // eat stdin buffer NOTE: useless after scanf validation
+
+    }
+
+
+    return settingsChange;
 }
 
 

@@ -13,7 +13,7 @@
 
 void game_loop(struct settings_t* settings, struct dict_t* colourDict);
 short add_piece(struct matrix_t* matrix, short player, short position);
-short check_win(struct matrix_t* matrix, short player, short position);
+short check_win(struct matrix_t* matrix, short player, short position, short connectAmount);
 void log_moves(struct matrix_t* matrix, short moves[], short max_moves, char *log_name);
 
 /* -------------------------------------------------------------------------- */
@@ -34,6 +34,8 @@ void game_loop(struct settings_t* settings, struct dict_t* colourDict)
 	short moves[max_moves];
     memset(moves, 0, max_moves*sizeof(short));
 
+    char inputBufferRead;
+
 	// Get player input - Done
 	// Verify input - Done
 	// Add piece - Done
@@ -49,6 +51,17 @@ void game_loop(struct settings_t* settings, struct dict_t* colourDict)
 		{
 			printf("Player %hd: ", player);
 			scanf("%hd", &position);
+            inputBufferRead = getchar();
+
+            // check if input is valid
+            while((inputBufferRead == EOF || inputBufferRead != '\n') || (position < 1 || position > matrix->columns)){
+
+                printf("\nInvalid input! Try again\n Player %hd (pick 1-%hd): ", player, matrix->columns);
+                scanf("%hd", &position);
+                inputBufferRead = getchar();
+
+
+            }
           	position--;
 
 			switch (add_piece(matrix, player, position))
@@ -57,6 +70,7 @@ void game_loop(struct settings_t* settings, struct dict_t* colourDict)
 					break;
 
 				case 1:		// Position exceeds board width
+                    // shouldnt be possible with input validation added
 					printf("Position out of bounds!\n");
 					continue;
 
@@ -80,23 +94,18 @@ void game_loop(struct settings_t* settings, struct dict_t* colourDict)
 
 
         // win condition
-        if(check_win(matrix, player, position)){
+        if(check_win(matrix, player, position, settings->gameSettings.connectAmount)){
 
             print_matrix(matrix, settings, colourDict); // to highlight winning nodes
             log_moves(matrix, moves, max_moves, log_name);
             printf("Player %hd wins!\n", player);
 
-            //eats scanf newline
-            getchar();
             printf("Press any key to continue: ");
             getchar();
             break;
         } // draw condition
         else if (i == max_moves){
             printf("No more moves - Draw!\n");
-
-            // eats scanf newline
-            getchar();
 
             printf("Press any key to continue: ");
             getchar();
@@ -137,10 +146,12 @@ short add_piece(struct matrix_t* matrix, short player, short position)
 	return 0;
 }
 
-short check_win(struct matrix_t* matrix, short player, short position)
+short check_win(struct matrix_t* matrix, short player, short position, short connectAmount)
 {
     struct node_t* start = get_node_by_cords(matrix, matrix->rows-1, position), *node;
     short piece_count;
+    bool checkWin = false;
+
 
     // start = last placed node
     for (; start->down != NULL && start->type == 0; start = start->down);
@@ -149,46 +160,47 @@ short check_win(struct matrix_t* matrix, short player, short position)
     // up and down case
     for(piece_count = 1, node = start; node->up != NULL && node->up->type == player; node = node->up, piece_count++);
     for(node = start; node->down != NULL && node->down->type == player; node = node->down, piece_count++);
-    if(piece_count >= 4){
+    if(piece_count >= connectAmount){
         // change win highlight
         node->winHiglight = true; // current node
 
         // linked nodes
         for(; node->up != NULL && node->up->type == player; node = node->up, node->winHiglight = true);
-        return 1;
+        // dont return straight away to colour double connections
+        checkWin = true;
     }
 
     // left and right case
     for(piece_count = 1, node = start; node->left != NULL && node->left->type == player; node = node->left, piece_count++);
     for(node = start; node->right != NULL && node->right->type == player; node = node->right, piece_count++);
-    if(piece_count >= 4){
+    if(piece_count >= connectAmount){
         // change win higlight
         node->winHiglight = true; // current node
         for(; node->left != NULL && node->left->type == player; node = node->left, node->winHiglight = true);
-        return 1;
+        checkWin = true;
     }
 
     // diagonal left right case
     for(piece_count = 1, node = start; (node->left != NULL && node->left->up != NULL) && node->left->up->type == player; node = node->left->up, piece_count++);
     for(node = start; (node->right != NULL && node->right->down != NULL) && node->right->down->type == player; node = node->right->down, piece_count++);
-    if(piece_count >= 4){
+    if(piece_count >= connectAmount){
         // change win higlight
         node->winHiglight = true; // current node
         for(; (node->left != NULL && node->left->up != NULL) && node->left->up->type == player; node = node->left->up, node->winHiglight = true);
-        return 1;
+        checkWin = true;
     }
 
     // diagonal right left case
     for(piece_count = 1, node = start; (node->right != NULL && node->right->up != NULL) && node->right->up->type == player; node = node->right->up, piece_count++);
     for(node = start; (node->left != NULL && node->left->down != NULL) && node->left->down->type == player; node = node->left->down, piece_count++);
-    if(piece_count >= 4){
+    if(piece_count >= connectAmount){
         // change win higlight
         node->winHiglight = true; // current node
         for(; (node->right != NULL && node->right->up != NULL) && node->right->up->type == player; node = node->right->up, node->winHiglight = true);
-        return 1;
+        checkWin = true;
     }
 
-    return 0;
+    return checkWin;
 }
 
 void log_moves(struct matrix_t* matrix, short moves[], short max_moves, char* log_name)
@@ -206,7 +218,6 @@ void log_moves(struct matrix_t* matrix, short moves[], short max_moves, char* lo
 
 	for (short x = 0; x < max_moves && moves[x] != 0 ; x++)
 	{
-        printf("%hd", moves[x]);
         // log moves in order
 		fprintf(log_file, "%hd;", moves[x]);
 	}
