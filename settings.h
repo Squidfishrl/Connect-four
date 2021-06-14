@@ -58,7 +58,7 @@ struct player_t{
     char symbol;
 
     uint8_t colourCodeLen; // even tho its a str (ending in '\0') fread doesn't care
-    char colourCode[10]; // would be nice if it could be a pointer but I keep getting fread errors when it is
+    char colourCode[6]; // would be nice if it could be a pointer but I keep getting fread errors when it is
 };
 
 struct playerSettings_t{
@@ -120,7 +120,7 @@ bool read_settings(char* fileName, struct settings_t* settings){
             fread(&settings->playerSettings->playerSettings[i]->colour, sizeof(char), 1, settingsFile);
             fread(&settings->playerSettings->playerSettings[i]->symbol, sizeof(char), 1, settingsFile);
             fread(&settings->playerSettings->playerSettings[i]->colourCodeLen, sizeof(uint8_t), 1, settingsFile);
-            fread(settings->playerSettings->playerSettings[i]->colourCode, sizeof(char), settings->playerSettings->playerSettings[i]->colourCodeLen + 1, settingsFile);
+            fread(settings->playerSettings->playerSettings[i]->colourCode, sizeof(char), settings->playerSettings->playerSettings[i]->colourCodeLen, settingsFile);
         }
 
         // read file settings
@@ -259,14 +259,15 @@ struct settings_t* define_settings(struct dict_t* colourDict){
 
     // default values for file settings
 
+    // log
     strcpy(fileSettings.logFileName, "log.txt\0");
-    // fileSettings.logFileName = "log.txt\0";
     fileSettings.logFileNameLen = strlen(fileSettings.logFileName);
-    strcpy(fileSettings.logFileName, "log.txt\0");
-    // fileSettings.settingsFileName = "settings.bin\0";
+
+    // settings
+    strcpy(fileSettings.settingsFileName, "settings.bin\0");
     fileSettings.settingsFileNameLen = strlen(fileSettings.settingsFileName);
-    strcpy(fileSettings.logFileName, "log.txt\0");
-    // fileSettings.statsFileName = "stats.bin\0";
+
+    strcpy(fileSettings.statsFileName, "stats.bin\0");
     fileSettings.statsFileNameLen = strlen(fileSettings.statsFileName);
 
     // memcpy because gameSettings has const vars and cant assign it
@@ -274,6 +275,8 @@ struct settings_t* define_settings(struct dict_t* colourDict){
     settings->playerSettings = playerSettings;
     settings->fileSettings = fileSettings;
 
+    display_settings_menu(settings);
+    printf("\n\n\n");
     return settings;
 }
 
@@ -307,6 +310,10 @@ void display_settings_menu(struct settings_t* settings){
     printf("log filename - %s\n", settings->fileSettings.logFileName);
     printf("settings filename - %s\n", settings->fileSettings.settingsFileName);
     printf("stats filename - %s\n", settings->fileSettings.statsFileName);
+
+    scanf("%d", &optionPick);
+    getchar();
+    getchar();
 }
 
 

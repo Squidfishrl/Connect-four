@@ -87,6 +87,7 @@ void display_main_menu(struct settings_t* settings, struct dict_t* colourDict){
                 // TODO: this displays them
                 break;
             case 3: // settings
+                display_settings_menu(settings);
                 // display_settings_menu();
                 break;
             case 4: // quit
