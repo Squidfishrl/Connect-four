@@ -1,6 +1,6 @@
 /* IMPORTED LIBRARIES */
 
-#include "game.h"
+#include "./libs/game/logic/game.h"
 
 /* -------------------------------------------------------------------------- */
 
@@ -38,7 +38,7 @@ void init(){
     // get colour dict
     struct dict_t* colourDict = init_colour_dict();
     // get settings
-    struct settings_t* settings = init_settings("settings.bin", colourDict);
+    struct settings_t* settings = init_settings("../res/bin/settings.bin", colourDict);
     // get stats
     // TODO:
 
@@ -53,6 +53,7 @@ void init(){
 void display_main_menu(struct settings_t* settings, struct dict_t* colourDict){
 
     short menuNO;
+    bool exitCheck;
 
     const char *yellow, *def, *flashing, *white, *heavy;
     yellow = binary_search_dict('Y', colourDict);
@@ -63,7 +64,6 @@ void display_main_menu(struct settings_t* settings, struct dict_t* colourDict){
     char errmsg[] = {" \n Invalid input! Try again\n go to"};
 
     do{
-
 
         system("clear");
 
@@ -78,30 +78,24 @@ void display_main_menu(struct settings_t* settings, struct dict_t* colourDict){
 
         // not in do while loop to allow error msg
         printf(" \n go to: ");
-        get_short(&menuNO, 1, 4, errmsg);
+        // get input and on esc exit program
+        exitCheck = !get_short(&menuNO, 1, 4, errmsg);
 
-        switch(menuNO){
-
-            case 1: // new game;
-                game_loop(settings, colourDict);
-                break;
-            case 2: // stats
-                // TODO: once game loop is done, track different stats during game loop (add a struct for it and save as binary file)
-                // TODO: this displays them
-                break;
-            case 3: // settings
-                display_settings_menu(settings, colourDict);
-                break;
-            case 4: // quit
-                printf("Exiting program!\n");
-                break;
-            default:
-                // shouldnt be possible and if it is printf wouldnt be seen
-                printf("Error - invalid option \n\n");
-                break;
+        if(exitCheck == true || menuNO == 4){
+            printf("Exiting program!\n");
+            break; // same as return cuz nothing after while(1)
         }
 
-    }while(menuNO != 4);
+        if(menuNO == 1){ // start new game
+            game_loop(settings, colourDict);
+        }else if(menuNO == 2){ // show stats menu
+            // TODO:
+        }else if(menuNO == 3){ // show settings menu
+            display_settings_menu(settings, colourDict);
+        }
+
+
+    }while(1);
 
 }
 

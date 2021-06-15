@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
-#include "settings.h"
+#include "../settings/settings.h"
 
 /* -------------------------------------------------------------------------- */
 

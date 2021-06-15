@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "board.h"
+#include "../board/board.h"
 
 /* -------------------------------------------------------------------------- */
 
@@ -34,7 +34,6 @@ void game_loop(struct settings_t* settings, struct dict_t* colourDict)
 	short moves[max_moves];
     memset(moves, 0, max_moves*sizeof(short));
 
-    char inputBufferRead;
 
 	// Get player input - Done
 	// Verify input - Done
@@ -50,19 +49,12 @@ void game_loop(struct settings_t* settings, struct dict_t* colourDict)
         while (1)
 		{
 			printf("Player %hd: ", player);
-			scanf("%hd", &position);
-            inputBufferRead = getchar();
+            while(get_short(&position, 1, matrix->columns, "Invalid position!\nchoose column: ") != true){
+                // msg repeating because if get_short exits from esc it won't say any msg
+                printf("Invalid position!\nchoose column: ");
+            };
 
-            // check if input is valid
-            while((inputBufferRead == EOF || inputBufferRead != '\n') || (position < 1 || position > matrix->columns)){
-
-                printf("\nInvalid input! Try again\n Player %hd (pick 1-%hd): ", player, matrix->columns);
-                scanf("%hd", &position);
-                inputBufferRead = getchar();
-
-
-            }
-          	position--;
+            position--;
 
 			switch (add_piece(matrix, player, position))
 			{
@@ -106,7 +98,7 @@ void game_loop(struct settings_t* settings, struct dict_t* colourDict)
         } // draw condition
         else if (i == max_moves){
             printf("No more moves - Draw!\n");
-
+            log_moves(matrix, moves, max_moves, log_name);
             printf("Press any key to continue: ");
             getchar();
             break;
@@ -205,11 +197,11 @@ short check_win(struct matrix_t* matrix, short player, short position, short con
 
 void log_moves(struct matrix_t* matrix, short moves[], short max_moves, char* log_name)
 {
-
+    printf("%s\n\n", log_name);
 	FILE* log_file;
 
 	if ((log_file = fopen(log_name, "a")));			// Try to open file
-	else if ((log_file = fopen(log_name, "w+")));	// File doesn't exist; try to create it
+	else if((log_file = fopen(log_name, "w+")));	// File doesn't exist; try to create it
 	else										// Can't create file
 	{
 		printf("Failed to create or open log_file file!\n");
