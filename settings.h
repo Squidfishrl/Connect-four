@@ -315,6 +315,8 @@ void display_settings_menu(struct settings_t* settings, struct dict_t* colourDic
         printf(" %s-%s%s 3) FILE SETTINGS%s\n", flash, def, white, def);
         printf(" %s-%s%s 4) BACK%s\n", flash, def, white, def);
 
+
+        // printf player and file stats
         // printf("player arr size - %hd\n\n", settings->playerSettings->playerArrSize);
         //
         // for(short i =0; i<settings->playerSettings->playerArrSize; i++){
@@ -455,7 +457,7 @@ bool display_game_settings_menu(struct settings_t* settings, struct dict_t* colo
         system("clear");
 
         if(settingsNO == i+1){
-            return settingsChange;
+            break;
         }
 
         printf("%s%s CONNECT FOUR %s", heavy, yellow, def);
@@ -467,10 +469,16 @@ bool display_game_settings_menu(struct settings_t* settings, struct dict_t* colo
         printf("%s%s CURRENT VALUE: %s %hd\n", heavy, white, def, *(short*)settingsArr[settingsNO - 1].value);
         printf("\n%s%s NEW VALUE: %s", heavy, white, def);
 
+        // if new value is assigned change settingsChange to true
         if(settingsArr[settingsNO - 1].maxValue == 1 && settingsArr[settingsNO - 1].minValue == 0){
-            get_bool(settingsArr[settingsNO-1].value, errmsg2);
+
+            if(get_bool(settingsArr[settingsNO-1].value, errmsg2)){
+                settingsChange = true;
+            }
         }else{
-            get_short(settingsArr[settingsNO-1].value, settingsArr[settingsNO-1].minValue, settingsArr[settingsNO-1].maxValue, errmsg2);
+            if(get_short(settingsArr[settingsNO-1].value, settingsArr[settingsNO-1].minValue, settingsArr[settingsNO-1].maxValue, errmsg2)){
+                settingsChange = true;
+            }
         }
 
     }

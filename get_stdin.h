@@ -15,8 +15,8 @@
 
 /* FUNCTION DECLARATIONS */
 
-void get_short(void* var, short minVal, short maxVal, char* errmsg);
-void get_bool(void* var, char* errmsg);
+bool get_short(void* var, short minVal, short maxVal, char* errmsg); // returns if changes were made -> escape to cancel
+bool get_bool(void* var, char* errmsg);
 
 /* -------------------------------------------------------------------------- */
 
@@ -30,12 +30,17 @@ void get_bool(void* var, char* errmsg);
 
 /* FUNCTION DEFINITIONS */
 
-void get_short(void* var, short minVal, short maxVal, char* errmsg){
+bool get_short(void* var, short minVal, short maxVal, char* errmsg){
 
     scanf("%hd", (short*)var);
     char inputBufferRead = getchar();
 
     while((inputBufferRead != EOF && inputBufferRead != '\n') || (*(short*)var < minVal || *(short*)var > maxVal)){
+
+        // if escape is first key that was pressed return without changing var
+        if(inputBufferRead == 27){
+            return false;
+        }
 
         // clear rest of stdin buffer so that msg isnt printed twice when a str is inputed]
         while((inputBufferRead != EOF && inputBufferRead != '\n')){
@@ -47,15 +52,22 @@ void get_short(void* var, short minVal, short maxVal, char* errmsg){
         scanf("%hd", (short*)var);
         inputBufferRead = getchar();
     }
+
+    return true;
 }
 
-void get_bool(void* var, char* errmsg){
+bool get_bool(void* var, char* errmsg){
     short holdVal;
 
     scanf("%hd", &holdVal);
     char inputBufferRead = getchar();
 
     while((inputBufferRead != EOF && inputBufferRead != '\n') || (holdVal < 0 || holdVal > 1)){
+
+        // if escape is first key that was pressed return without changing var
+        if(inputBufferRead == 27){
+            return false;
+        }
 
         // clear rest of stdin buffer [so that msg isnt printed twice when a str is inputed]
         while((inputBufferRead != EOF && inputBufferRead != '\n')){
@@ -69,6 +81,7 @@ void get_bool(void* var, char* errmsg){
     }
 
     *(bool*)var = holdVal;
+    return true;
 }
 
 /* -------------------------------------------------------------------------- */
