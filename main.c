@@ -60,8 +60,7 @@ void display_main_menu(struct settings_t* settings, struct dict_t* colourDict){
     flashing = binary_search_dict('F', colourDict);
     white = binary_search_dict('W', colourDict);
     heavy = binary_search_dict('H', colourDict);
-
-    int inputBufferRead;
+    char errmsg[] = {" \n Invalid input! Try again\n go to"};
 
     do{
 
@@ -79,20 +78,7 @@ void display_main_menu(struct settings_t* settings, struct dict_t* colourDict){
 
         // not in do while loop to allow error msg
         printf(" \n go to: ");
-        scanf("%hd", &menuNO);
-        inputBufferRead = getchar();
-
-        // check if input was valid - if not scanf again
-        while((inputBufferRead == EOF || inputBufferRead != '\n') || (menuNO < 1 || menuNO > 4)){
-
-            //TODO: if more than 1 char was entered clear stdin buffer (so that invalid input msg isn't printed multiple times) and port to all input validation
-
-            printf("\n Invalid input! Try again\n go to (1-4): ");
-            scanf("%hd", &menuNO);
-            inputBufferRead = getchar();
-        }
-
-        // scanf("%hd", &menuNO);
+        get_short(&menuNO, 1, 4, errmsg);
 
         switch(menuNO){
 
