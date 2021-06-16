@@ -38,7 +38,7 @@ void init(){
     // get colour dict
     struct dict_t* colourDict = init_colour_dict();
     // get settings
-    struct settings_t* settings = init_settings("../res/bin/settings.bin", colourDict);
+    struct settings_t* settings = init_settings("settings.bin", colourDict);
     // get stats
     // TODO:
 

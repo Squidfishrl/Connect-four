@@ -205,15 +205,17 @@ bool write_settings(char* fileName, struct settings_t* settings){
 struct settings_t* init_settings(char* fileName, struct dict_t* colourDict){
 
     struct settings_t* settings;
+    char editedFileName[strlen(fileName) + strlen("../res/bin/")];
+    sprintf(editedFileName, "../res/bin/%s", fileName);
 
     // file exists
-    if(access(fileName, F_OK) == 0){
+    if(access(editedFileName, F_OK) == 0){
 
 
         settings = (struct settings_t*)malloc(sizeof(struct settings_t));
 
         // read file to settings
-        if(!read_settings(fileName, settings)){
+        if(!read_settings(editedFileName, settings)){
             printf("Failed to create or open settings file!\n");
             return NULL;
         }
@@ -221,7 +223,7 @@ struct settings_t* init_settings(char* fileName, struct dict_t* colourDict){
         //file doesn't exist
 
         settings = define_settings(colourDict);
-        if(!write_settings(fileName, settings)){
+        if(!write_settings(editedFileName, settings)){
             printf("Failed to create or open settings file!\n");
         }
     }
@@ -275,12 +277,12 @@ struct settings_t* define_settings(struct dict_t* colourDict){
 
     // log
     // TODO: maybe dont store ,,/,,/ .. right here
-    strcpy(fileSettings.logFileName, "../res/log.txt\0");
+    strcpy(fileSettings.logFileName, "log.txt\0");
     fileSettings.logFileNameLen = strlen(fileSettings.logFileName);
 
     // settings
     // TODO: maybe dont store ,,/,,/ .. right here
-    strcpy(fileSettings.settingsFileName, "../../../../res/bin/settings.bin\0");
+    strcpy(fileSettings.settingsFileName, "settings.bin\0");
     fileSettings.settingsFileNameLen = strlen(fileSettings.settingsFileName);
 
     // TODO: maybe dont store ,,/,,/ .. right here
@@ -300,7 +302,8 @@ void display_settings_menu(struct settings_t* settings, struct dict_t* colourDic
 
     short settingsNO;
     bool exitCheck = false;
-
+    char settingsFileName[settings->fileSettings.settingsFileNameLen + strlen("../res/bin/")];
+    sprintf(settingsFileName, "../res/bin/%s", settings->fileSettings.settingsFileName);
     // colour vars
     const char *flash, *white, *def, *yellow, *heavy;
     flash = binary_search_dict('F', colourDict);
@@ -350,8 +353,9 @@ void display_settings_menu(struct settings_t* settings, struct dict_t* colourDic
         if(exitCheck == true || settingsNO == 4){
             if(changedSettings){
                 // if settings were made write them
-                write_settings(settings->fileSettings.settingsFileName, settings);
+                write_settings(settingsFileName, settings);
             }
+            getchar();
             break;
         }
 
@@ -385,7 +389,7 @@ bool display_game_settings_menu(struct settings_t* settings, struct dict_t* colo
     def = binary_search_dict('D', colourDict);
     heavy = binary_search_dict('H', colourDict);
     yellow = binary_search_dict('Y', colourDict);
-    bool settingsChange = true; // TODO: change to false once scanf validation funct
+    bool settingsChange = false;
 
     // stdin err msges
     char errmsg1[] = {" \n Invalid input! Try again\n go to"};
@@ -395,7 +399,7 @@ bool display_game_settings_menu(struct settings_t* settings, struct dict_t* colo
     strcat(errmsg2, " NEW VALUE: ");
     strcat(errmsg2, def);
 
-    // arr to hold all game settings
+    // arr to hold all game settings info
     struct displaySettings_t settingsArr[] =
     {
         {

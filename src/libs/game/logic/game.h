@@ -24,7 +24,10 @@ void log_moves(struct matrix_t* matrix, short moves[], short max_moves, char *lo
 void game_loop(struct settings_t* settings, struct dict_t* colourDict)
 {
     struct matrix_t* matrix = create_matrix(settings->gameSettings.boardRows, settings->gameSettings.boardColumns);
-    char* log_name = settings->fileSettings.logFileName;
+
+    char log_name[settings->fileSettings.logFileNameLen + strlen("../res/")];
+    sprintf(log_name, "../res/%s", settings->fileSettings.logFileName);
+    // strcat(log_name, settings->fileSettings.logFileName);
 
 	short player = 1;
 	short position = 0;
