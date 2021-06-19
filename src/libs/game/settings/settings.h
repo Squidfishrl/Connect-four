@@ -97,6 +97,7 @@ void free_settings(struct settings_t* settings); // TODO:
 
 void display_settings_menu(struct settings_t* settings, struct dict_t* colourDict); // NOTE: could add filename depending what I do in it
 bool display_game_settings_menu(struct settings_t* settings, struct dict_t* colourDict); // returns if changes were made
+bool display_player_settings_menu(struct settings_t* settings, struct dict_t* colourDict);
 
 /* -------------------------------------------------------------------------- */
 
@@ -355,7 +356,6 @@ void display_settings_menu(struct settings_t* settings, struct dict_t* colourDic
                 // if settings were made write them
                 write_settings(settingsFileName, settings);
             }
-            getchar();
             break;
         }
 
@@ -367,7 +367,9 @@ void display_settings_menu(struct settings_t* settings, struct dict_t* colourDic
                 changedSettings = true;
             };
         }else if(settingsNO == 2){
-            // TODO: player settings
+            if(display_player_settings_menu(settings, colourDict)){
+                changedSettings = true;
+            }
         }else{
             // TODO: file settings
         }
@@ -424,6 +426,13 @@ bool display_game_settings_menu(struct settings_t* settings, struct dict_t* colo
             .maxValue = 10
         },
         {
+            .name = "win_highlight_colour",
+            .description = "Sets colour that highlights winning nodes.",
+            .value = &settings->gameSettings.winHighlightColour,
+            .minValue = 1,
+            .maxValue = colourDict->currentSize
+        },
+        {
             .name = "against_bot",
             .description = "[WIP]Sets your opponents to bots.",
             .value = &settings->gameSettings.againstBot,
@@ -468,7 +477,14 @@ bool display_game_settings_menu(struct settings_t* settings, struct dict_t* colo
 
         // print all setting name-value from settingsArr
         for(i = 0; strcmp(settingsArr[i].name, "BACK") != 0; i++){
-            printf(" %s-%s%s %d) %s - %hd%s\n", flash, def, white, i+1, settingsArr[i].name, *(short*)settingsArr[i].value, def);
+            // show win highligh colour
+            if(strcmp(settingsArr[i].name, "win_highlight_colour") == 0){
+                printf(" %s-%s%s %hd) %s - %s'%c'%s \n", flash, def, white, i+1, settingsArr[i].name, binary_search_dict(*(char*)settingsArr[i].value, colourDict), *(char*)settingsArr[i].value, def);
+            }else{
+            // show every other setting
+                printf(" %s-%s%s %hd) %s - %hd%s\n", flash, def, white, i+1, settingsArr[i].name, *(short*)settingsArr[i].value, def);
+            }
+
         }
         // print BACK
         printf(" %s-%s%s %d) %s%s\n", flash, def, white, i+1, settingsArr[i].name, def);
@@ -491,7 +507,15 @@ bool display_game_settings_menu(struct settings_t* settings, struct dict_t* colo
         printf("%s%s NAME: %s %s\n", heavy, white, def, settingsArr[settingsNO - 1].name);
         printf("%s%s DESCRIPTION: %s %s\n", heavy, white, def, settingsArr[settingsNO - 1].description);
         printf("%s%s VALUE RANGE: %s (%hd-%hd)\n", heavy, white, def, settingsArr[settingsNO - 1].minValue, settingsArr[settingsNO - 1].maxValue);
-        printf("%s%s CURRENT VALUE: %s %hd\n", heavy, white, def, *(short*)settingsArr[settingsNO - 1].value);
+
+        // special case for char val setting
+        if(strcmp(settingsArr[settingsNO - 1].name, "win_highlight_colour") == 0){
+            print_colour_dict(colourDict);
+            printf("\n\n%s%s CURRENT VALUE:%s '%c'\n", heavy, white, def, *(char*)settingsArr[settingsNO - 1].value);
+        }else{
+            printf("%s%s CURRENT VALUE: %s %hd\n", heavy, white, def, *(short*)settingsArr[settingsNO - 1].value);
+        }
+
         printf("\n%s%s NEW VALUE: %s", heavy, white, def);
 
         // if new value is assigned change settingsChange to true
@@ -503,6 +527,12 @@ bool display_game_settings_menu(struct settings_t* settings, struct dict_t* colo
         }else{
             if(get_short(settingsArr[settingsNO-1].value, settingsArr[settingsNO-1].minValue, settingsArr[settingsNO-1].maxValue, errmsg2)){
                 settingsChange = true;
+
+                // special case for char val setting
+                if(strcmp(settingsArr[settingsNO-1].name, "win_highlight_colour") == 0){
+                    *(char*)settingsArr[settingsNO-1].value = colourDict->nodeArr[*(short*)settingsArr[settingsNO-1].value-1].key;
+                }
+
             }
         }
 
@@ -512,5 +542,121 @@ bool display_game_settings_menu(struct settings_t* settings, struct dict_t* colo
     return settingsChange;
 }
 
+bool display_player_settings_menu(struct settings_t* settings, struct dict_t* colourDict){
+
+    short settingsNO, settingsNO2, settingsNO3;
+    bool exitCheck, exitCheck2, exitCheck3, settingsChange;
+    exitCheck = exitCheck2 = exitCheck3 = settingsChange = false;
+
+    const char *flash, *white, *def, *yellow, *heavy;
+    flash = binary_search_dict('F', colourDict);
+    white = binary_search_dict('W', colourDict);
+    def = binary_search_dict('D', colourDict);
+    heavy = binary_search_dict('H', colourDict);
+    yellow = binary_search_dict('Y', colourDict);
+
+    char errmsg1[] = {" \n Invalid input! Try again\n go to"};
+    char errmsg2[] = {" \n Invalid input! Try again\n"};
+
+
+    short i;
+
+    while(1){
+
+        system("clear");
+
+        printf("%s%s CONNECT FOUR %s", heavy, yellow, def);
+        printf("%s (player-settings) %s\n\n", yellow, def);
+
+        // print all players
+        for(i = 0; i<settings->playerSettings->playerArrSize; i++){
+            printf(" %s-%s%s %hd) PLAYER %hd %s\n", flash, def, white, i+1, settings->playerSettings->playerSettings[i]->number, def);
+            printf("        symbol: %s%c%s\n", settings->playerSettings->playerSettings[i]->colourCode, settings->playerSettings->playerSettings[i]->symbol, def);
+        }
+
+        // print back option
+        printf(" %s-%s%s %hd) BACK%s\n", flash, def, white, i+1, def);
+
+        printf("\n go to: ");
+        exitCheck = !get_short(&settingsNO, 1, i+1, errmsg1);
+
+        // exit condition
+        if(settingsNO == i+1 || exitCheck == true){
+            break;
+        }else{
+            // choose which player setting u want to change (colour/symbol)
+            while(1){
+
+                system("clear");
+
+                printf("%s%s CONNECT FOUR %s", heavy, yellow, def);
+                printf("%s (player_%hd-settings) %s\n\n", yellow, settingsNO, def);
+
+                printf(" %s-%s%s 1) change colour %s\n", flash, def, white, def);
+                printf(" %s-%s%s 2) change symbol %s\n", flash, def, white, def);
+                printf(" %s-%s%s 3) BACK %s\n", flash, def, white, def);
+
+                printf("\n go to: ");
+                exitCheck2 = !get_short(&settingsNO2, 1, 3, errmsg1);
+
+                // exit to player-settings menu
+                if(settingsNO2 == 3 || exitCheck2 == true){
+                    break;
+
+                }else{
+                    if(settingsNO2 == 1){
+                        // change colour
+                        system("clear");
+
+                        printf("%s%s CONNECT FOUR %s", heavy, yellow, def);
+                        printf("%s (player_%hd-settings-symbol_colour) %s\n\n", yellow, settingsNO, def);
+
+                        print_colour_dict(colourDict);
+
+                        printf("\n\n choose colourNO: ");
+                        exitCheck3 = !get_short(&settingsNO3, 1, colourDict->currentSize, errmsg2);
+
+                        if(exitCheck3 == true){
+                            // exit to player_n-settings
+                            continue;
+                        }else{
+
+
+
+                            settings->playerSettings->playerSettings[settingsNO - 1]->colour = colourDict->nodeArr[settingsNO3 - 1].key;
+                            strcpy(settings->playerSettings->playerSettings[settingsNO - 1]->colourCode, colourDict->nodeArr[settingsNO3 - 1].value);
+                            settings->playerSettings->playerSettings[settingsNO - 1]->colourCodeLen = strlen(settings->playerSettings->playerSettings[settingsNO2 - 1]->colourCode);
+
+                            settingsChange = true;
+
+                            // exit to player-settings
+                            break;
+                        }
+
+                    }else{ // == 2
+
+                        system("clear");
+                        printf("%s%s CONNECT FOUR %s", heavy, yellow, def);
+                        printf("%s (player_%hd-settings-symbol_letter) %s\n\n", yellow, settingsNO, def);
+
+                        printf("\n\n choose symbol: ");
+                        settings->playerSettings->playerSettings[settingsNO-1]->symbol = getchar();
+
+                        // gets only the first character of msg -> eat the rest if any
+                        clear_stdin();
+
+
+                        settingsChange = true;
+
+                        // exit to player-settings
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    return settingsChange;
+}
 
 /* -------------------------------------------------------------------------- */

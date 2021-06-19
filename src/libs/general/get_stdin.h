@@ -17,6 +17,7 @@
 
 bool get_short(void* var, short minVal, short maxVal, char* errmsg); // returns if changes were made -> escape to cancel
 bool get_bool(void* var, char* errmsg);
+void clear_stdin();
 
 /* -------------------------------------------------------------------------- */
 
@@ -29,6 +30,14 @@ bool get_bool(void* var, char* errmsg);
 
 
 /* FUNCTION DEFINITIONS */
+
+void clear_stdin(){
+    char inputBufferRead = getchar();
+
+    while((inputBufferRead != EOF && inputBufferRead != '\n')){
+        inputBufferRead = getchar();
+    }
+}
 
 bool get_short(void* var, short minVal, short maxVal, char* errmsg){
 

@@ -38,10 +38,24 @@ void sort_dict(struct dict_t* dict);
 void swap(struct dictNode_t* node1, struct dictNode_t* node2); // help function for sort_dict
 void free_dict(struct dict_t* dict);
 
+void print_colour_dict(struct dict_t* colourDict);
 /* -------------------------------------------------------------------------- */
 
 
 /* FUNCTION DEFINITIONS */
+
+void print_colour_dict(struct dict_t* colourDict){
+
+    for(short i = 0; i<colourDict->currentSize; i++){
+
+        if(i+1 < 10){ // ifs to make the colourNO be on the same height
+            printf("\n   %hd) %s %c \033[0m ", i+1, colourDict->nodeArr[i].value, colourDict->nodeArr[i].key);
+        }else{
+            printf("\n  %hd) %s %c \033[0m ", i+1, colourDict->nodeArr[i].value, colourDict->nodeArr[i].key);
+        }
+
+    }
+}
 
 void free_dict(struct dict_t* dict){
     free(dict->nodeArr);

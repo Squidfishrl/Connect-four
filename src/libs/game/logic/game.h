@@ -97,6 +97,7 @@ void game_loop(struct settings_t* settings, struct dict_t* colourDict)
 
             printf("Press any key to continue: ");
             getchar();
+            clear_stdin();
             break;
         } // draw condition
         else if (i == max_moves){
@@ -104,6 +105,7 @@ void game_loop(struct settings_t* settings, struct dict_t* colourDict)
             log_moves(matrix, moves, max_moves, log_name);
             printf("Press any key to continue: ");
             getchar();
+            clear_stdin();
             break;
         }
 	}
@@ -200,7 +202,7 @@ short check_win(struct matrix_t* matrix, short player, short position, short con
 
 void log_moves(struct matrix_t* matrix, short moves[], short max_moves, char* log_name)
 {
-    printf("%s\n\n", log_name);
+    // printf("%s\n\n", log_name);
 	FILE* log_file;
 
 	if ((log_file = fopen(log_name, "a")));			// Try to open file
