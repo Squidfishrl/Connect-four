@@ -47,7 +47,7 @@ void game_loop(struct settings_t* settings, struct dict_t* colourDict)
 
     print_matrix(matrix, settings, colourDict);
 
-	for (short i = 0; 1; player =  1 + !(player - 1), i++)
+	for (short i = 0; 1; player = 1 + (player >= settings->gameSettings.playerAmount ? 0 : player), i++)
 	{
         while (1)
 		{
@@ -206,7 +206,7 @@ void log_moves(struct matrix_t* matrix, short moves[], short max_moves, char* lo
 	FILE* log_file;
 
 	if ((log_file = fopen(log_name, "a")));			// Try to open file
-	else if((log_file = fopen(log_name, "w+")));	// File doesn't exist; try to create it
+	// else if((log_file = fopen(log_name, "w+")));	// File doesn't exist; try to create it (unneeded with "a" mode)
 	else										// Can't create file
 	{
 		printf("Failed to create or open log_file file!\n");
