@@ -97,7 +97,6 @@ void game_loop(struct settings_t* settings, struct dict_t* colourDict)
 
             printf("Press any key to continue: ");
             getchar();
-            clear_stdin();
             break;
         } // draw condition
         else if (i == max_moves){
@@ -105,7 +104,6 @@ void game_loop(struct settings_t* settings, struct dict_t* colourDict)
             log_moves(matrix, moves, max_moves, log_name);
             printf("Press any key to continue: ");
             getchar();
-            clear_stdin();
             break;
         }
 	}
