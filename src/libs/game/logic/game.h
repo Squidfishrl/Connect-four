@@ -14,7 +14,7 @@
 void game_loop(struct settings_t* settings, struct dict_t* colourDict);
 short add_piece(struct matrix_t* matrix, short player, short position);
 short check_win(struct matrix_t* matrix, short player, short position, short connectAmount);
-void log_moves(struct matrix_t* matrix, short moves[], short max_moves, char *log_name);
+void log_moves(struct matrix_t* matrix, short moves[], short max_moves, char *log_name, struct playerSettings_t* settings);
 
 /* -------------------------------------------------------------------------- */
 
@@ -52,7 +52,8 @@ void game_loop(struct settings_t* settings, struct dict_t* colourDict)
         while (1)
 		{
 			printf("Player %hd: ", player);
-            while(get_short(&position, 1, matrix->columns, "Invalid position!\nchoose column: ") != true){
+
+            while(get_short_from_char(&position, 1, matrix->columns, "Invalid position!\nchoose column: ") != true){
                 // msg repeating because if get_short exits from esc it won't say any msg
                 printf("Invalid position!\nchoose column: ");
             };
@@ -92,24 +93,20 @@ void game_loop(struct settings_t* settings, struct dict_t* colourDict)
         if(check_win(matrix, player, position, settings->gameSettings.connectAmount)){
 
             print_matrix(matrix, settings, colourDict); // to highlight winning nodes
-            log_moves(matrix, moves, max_moves, log_name);
             printf("Player %hd wins!\n", player);
 
-            printf("Press any key to continue: ");
-            getchar();
             break;
         } // draw condition
         else if (i == max_moves){
             printf("No more moves - Draw!\n");
-            log_moves(matrix, moves, max_moves, log_name);
-            printf("Press any key to continue: ");
-            getchar();
             break;
         }
 	}
 
 	// log_moves(matrix, moves, max_moves, log_name);
-
+    log_moves(matrix, moves, max_moves, log_name, settings->playerSettings);
+    printf("Press any key to continue: ");
+    getchar();
 	return;
 }
 
@@ -198,7 +195,7 @@ short check_win(struct matrix_t* matrix, short player, short position, short con
     return checkWin;
 }
 
-void log_moves(struct matrix_t* matrix, short moves[], short max_moves, char* log_name)
+void log_moves(struct matrix_t* matrix, short moves[], short max_moves, char* log_name, struct playerSettings_t* settings)
 {
     // printf("%s\n\n", log_name);
 	FILE* log_file;
@@ -230,17 +227,12 @@ void log_moves(struct matrix_t* matrix, short moves[], short max_moves, char* lo
                 fprintf(log_file, "|");
             }
 
-            switch(iterNode2->type){
-                case 0:
-                    fprintf(log_file, " ");
-                    break;
-                case 1:
-                    fprintf(log_file, "X");
-                    break;
-                case 2:
-                    fprintf(log_file, "O");
-                    break;
+            if(iterNode2->type == 0){
+                fprintf(log_file, " ");
+            }else{
+                fprintf(log_file, "%c", settings->playerSettings[iterNode2->type-1]->symbol);
             }
+
 
             fprintf(log_file, "|");
         }
