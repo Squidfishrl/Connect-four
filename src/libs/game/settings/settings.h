@@ -61,7 +61,7 @@ struct player_t{
     char symbol;
 
     uint8_t colourCodeLen; // even tho its a str (ending in '\0') fread doesn't care
-    char colourCode[10]; // would be nice if it could be a pointer but I keep getting fread errors when it is
+    char colourCode[6]; // would be nice if it could be a pointer but I keep getting fread errors when it is
 };
 
 struct playerSettings_t{
@@ -94,6 +94,7 @@ bool read_settings(char* fileName, struct settings_t* settings);
 bool change_setting(struct settings_t* settings, short settingNO); // TODO: useless - remove
 bool write_settings(char* fileName, struct settings_t* settings);
 void free_settings(struct settings_t* settings); // TODO:
+void add_player(struct playerSettings_t* settings, struct dict_t* colourDict);
 
 void display_settings_menu(struct settings_t* settings, struct dict_t* colourDict); // NOTE: could add filename depending what I do in it
 bool display_game_settings_menu(struct settings_t* settings, struct dict_t* colourDict); // returns if changes were made
@@ -103,6 +104,30 @@ bool display_player_settings_menu(struct settings_t* settings, struct dict_t* co
 
 
 /* FUNCTION DEFINITIONS */
+
+void add_player(struct playerSettings_t* settings, struct dict_t* colourDict){
+
+    // allocate space for a new player
+    settings->playerSettings = (struct player_t**)realloc(settings->playerSettings, ++settings->playerArrSize * sizeof(struct player_t*) );
+
+    // allocate new player
+    settings->playerSettings[settings->playerArrSize-1] = (struct player_t*)malloc(sizeof(struct player_t));
+
+    //assign number
+    settings->playerSettings[settings->playerArrSize-1]->number = settings->playerArrSize;
+
+    /* assign random colour */
+
+    // colour key
+    settings->playerSettings[settings->playerArrSize-1]->colour = fetch_random_colour(colourDict);
+    //colour code
+    strcpy(settings->playerSettings[settings->playerArrSize-1]->colourCode, binary_search_dict(settings->playerSettings[settings->playerArrSize-1]->colour, colourDict));
+    // colour code len
+    settings->playerSettings[settings->playerArrSize-1]->colourCodeLen = strlen(settings->playerSettings[settings->playerArrSize-1]->colourCode);
+
+    /* assign symbol */
+    settings->playerSettings[settings->playerArrSize-1]->symbol = '1' + settings->playerArrSize - 1;
+}
 
 void free_settings(struct settings_t* settings){
     // TODO:
@@ -531,16 +556,25 @@ bool display_game_settings_menu(struct settings_t* settings, struct dict_t* colo
                 // special case for char val setting
                 if(strcmp(settingsArr[settingsNO-1].name, "win_highlight_colour") == 0){
                     *(char*)settingsArr[settingsNO-1].value = colourDict->nodeArr[*(short*)settingsArr[settingsNO-1].value-1].key;
+
+                // case for changing player amount
+                }else if(strcmp(settingsArr[settingsNO-1].name, "player_amount") == 0){
+
+                    // check if player amount > playerArrSize
+                    if(*(int*)settingsArr[settingsNO-1].value > settings->playerSettings->playerArrSize){
+                        printf("player arr size - %hd", settings->playerSettings->playerArrSize);
+                        printf("\n ERROR - Not enough players defined. Add more via the player settings menu. (value set to 2)");
+                        *(int*)settingsArr[settingsNO-1].value = 2;
+                        getchar(); // wait for user input
+                    }
                 }
-
             }
+
         }
-
     }
-
-
     return settingsChange;
 }
+
 
 bool display_player_settings_menu(struct settings_t* settings, struct dict_t* colourDict){
 
@@ -574,15 +608,25 @@ bool display_player_settings_menu(struct settings_t* settings, struct dict_t* co
             printf("        symbol: %s%c%s\n", settings->playerSettings->playerSettings[i]->colourCode, settings->playerSettings->playerSettings[i]->symbol, def);
         }
 
-        // print back option
-        printf(" %s-%s%s %hd) BACK%s\n", flash, def, white, i+1, def);
+        // back and add player
+        printf(" %s-%s%s %hd) ADD PLAYER%s\n", flash, def, white, i+1, def);
+        printf(" %s-%s%s %hd) BACK%s\n", flash, def, white, i+2, def);
 
         printf("\n go to: ");
-        exitCheck = !get_short(&settingsNO, 1, i+1, errmsg1);
+        exitCheck = !get_short(&settingsNO, 1, i+2, errmsg1);
 
         // exit condition
-        if(settingsNO == i+1 || exitCheck == true){
+        if(settingsNO == i+2 || exitCheck == true){
             break;
+        }else if(settingsNO == i+1){ // add player
+            if(settings->playerSettings->playerArrSize >= 9){
+                printf("ERROR - already reached max player amount");
+                getchar();
+            }else{
+                add_player(settings->playerSettings, colourDict);
+                settingsChange = true;
+            }
+
         }else{
             // choose which player setting u want to change (colour/symbol)
             while(1){

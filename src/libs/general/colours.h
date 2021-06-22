@@ -39,10 +39,15 @@ void swap(struct dictNode_t* node1, struct dictNode_t* node2); // help function 
 void free_dict(struct dict_t* dict);
 
 void print_colour_dict(struct dict_t* colourDict);
+char fetch_random_colour(struct dict_t* colourDict);
 /* -------------------------------------------------------------------------- */
 
 
 /* FUNCTION DEFINITIONS */
+
+char fetch_random_colour(struct dict_t* colourDict){
+    return(colourDict->nodeArr[rand() % (colourDict->currentSize - 1)].key);
+}
 
 void print_colour_dict(struct dict_t* colourDict){
 

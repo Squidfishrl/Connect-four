@@ -107,14 +107,14 @@ void print_matrix(struct matrix_t* matrix, struct settings_t* settings,struct di
                     printf("%s%c", settings->playerSettings->playerSettings[iterNode2->type - 1]->colourCode, settings->playerSettings->playerSettings[iterNode2->type - 1]->symbol);
                 }
             }else{
-                printf("this should be impossible but ok");
+                printf("ERROR: player amount > playerArrSize");
             }
 
             printf("%s", defColour); // stop colouring
             printf("|");
         }
-        printf("\n");
 
+        printf("\n");
     }
 
     // add numbers under the board

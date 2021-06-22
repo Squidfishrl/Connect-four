@@ -1,11 +1,14 @@
 /* IMPORTED LIBRARIES */
 
+#include <time.h>
+
 #include "./libs/game/logic/game.h"
 
 /* -------------------------------------------------------------------------- */
 
 
 /* FUNCTION DECLARATIONS */
+
 void init(); // starts main menu and prepares all needed vars
 void display_main_menu(struct settings_t* settings, struct dict_t* colourDict);
 void quit(struct settings_t* settings, struct dict_t* colourDict); // frees all rescources and quits  NOTE: add stats when done
@@ -42,6 +45,8 @@ void init(){
     // get stats
     // TODO:
 
+    // set rand seed
+    srand(time(NULL));
 
     // launch main menu
     display_main_menu(settings, colourDict);
