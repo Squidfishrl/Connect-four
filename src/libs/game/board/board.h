@@ -66,12 +66,17 @@ struct node_t* get_node_by_cords(struct matrix_t* matrix, int row, int column){
 // O(n), where n is the amount of nodes connected to the matrix
 void print_matrix(struct matrix_t* matrix, struct settings_t* settings,struct dict_t* colourDict){
 
-    system("clear");
-
     // fetch colours
-    const char* defColour = binary_search_dict('D', colourDict);
+    const char* def = binary_search_dict('D', colourDict);
     const char* winHighlightColour = binary_search_dict(settings->gameSettings.winHighlightColour, colourDict);
     const char* flash = binary_search_dict('F', colourDict);
+    const char* heavy = binary_search_dict('H', colourDict);
+    const char* yellow = binary_search_dict('Y', colourDict);
+
+    system("clear");
+
+    printf("%s%s CONNECT FOUR %s", heavy, yellow, def);
+    printf("%s (in-game) %s\n\n", yellow, def);
 
     // add numbers above the board
     printf("|");
@@ -110,7 +115,7 @@ void print_matrix(struct matrix_t* matrix, struct settings_t* settings,struct di
                 printf("ERROR: player amount > playerArrSize");
             }
 
-            printf("%s", defColour); // stop colouring
+            printf("%s", def); // stop colouring
             printf("|");
         }
 
