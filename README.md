@@ -43,5 +43,5 @@ $ ./run/launchLinux.sh
 [Connect Four](https://github.com/Squidfishrl/Connect-four) was developed as a [TUES](https://www.elsys-bg.org/) school project for 10th grade.
 
 Work was split between 2 people:
-- [Ivaylo Genchev/Squidfishrl](https://github.com/Squidfishrl) - Created game board, implemented settings and made the main menu
-- [Daniel Paunov/McAwesome123](https://github.com/McAwesome123) - Created game logic
+- [Ivaylo Genchev / Squidfishrl](https://github.com/Squidfishrl) - Created game board, implemented settings and made the main menu
+- [Daniel Paunov / McAwesome123](https://github.com/McAwesome123) - Created game logic
