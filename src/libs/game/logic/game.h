@@ -51,6 +51,7 @@ void game_loop(struct settings_t* settings, struct dict_t* colourDict)
 	{
         while (1)
 		{
+            printf("%d/%d \n", i, max_moves);
 			printf("Player %hd: ", player);
 
             while(get_short_from_char(&position, 1, matrix->columns, "Invalid position!\nchoose column: ") != true){
@@ -84,7 +85,7 @@ void game_loop(struct settings_t* settings, struct dict_t* colourDict)
 
 		moves[i] = position+1;
 
-        printf("\n %d/%d \n\n", i+1, max_moves);
+
         print_matrix(matrix, settings, colourDict);
 
 
@@ -97,7 +98,7 @@ void game_loop(struct settings_t* settings, struct dict_t* colourDict)
 
             break;
         } // draw condition
-        else if (i == max_moves){
+        else if (i == max_moves-1){
             printf("No more moves - Draw!\n");
             break;
         }
@@ -147,7 +148,6 @@ short check_win(struct matrix_t* matrix, short player, short position, short con
 
     // start = last placed node
     for (; start->down != NULL && start->type == 0; start = start->down);
-    printf("%hd, %hd \n", start->row, start->column);
 
     // up and down case
     for(piece_count = 1, node = start; node->up != NULL && node->up->type == player; node = node->up, piece_count++);
