@@ -37,7 +37,10 @@ $ ./run/launchLinux.sh
 [Connect Four](https://github.com/Squidfishrl/Connect-four) is developed under Linux. Using it under any other OS would have undefined behaviour and would likely not work.
 
 ##### - GCC compiler
+Required for automated launch. Game might not work with different compilers / compiler settings.
 
+#### - console using Bash shell
+Required for automated launch.
 
 ## How we made it
 [Connect Four](https://github.com/Squidfishrl/Connect-four) was developed as a [TUES](https://www.elsys-bg.org/) school project for 10th grade.
