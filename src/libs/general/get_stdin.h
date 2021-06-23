@@ -23,7 +23,8 @@ char clear_stdin(); // returns the first char it scnaned
 /* -------------------------------------------------------------------------- */
 
 
-/* FUNCTION DEFINITIONS */
+/* FUNCTI
+  clear_stdin(); // clear stdin incase escape was pressed multiple times to not  instant exitON DEFINITIONS */
 
 bool get_short_from_char(void* var, short minVal, short maxVal, char* errmsg){
 
@@ -46,6 +47,7 @@ bool get_short_from_char(void* var, short minVal, short maxVal, char* errmsg){
 
         // if escape is first key that was pressed return without changing var
         if(*(short*)var == 27){
+            clear_stdin();
             return false;
         }
 
@@ -109,6 +111,7 @@ bool get_short(void* var, short minVal, short maxVal, char* errmsg){
 
         // if escape is first key that was pressed return without changing var
         if(inputBufferRead == 27){
+            clear_stdin(); // clear stdin incase escape was pressed multiple times to not  instant exit
             return false;
         }
 
@@ -134,6 +137,7 @@ bool get_bool(void* var, char* errmsg){
 
         // if escape is first key that was pressed return without changing var
         if(inputBufferRead == 27){
+            clear_stdin();
             return false;
         }
 
