@@ -324,7 +324,7 @@ struct settings_t* define_settings(struct dict_t* colourDict){
     fileSettings.settingsFileNameLen = strlen(fileSettings.settingsFileName);
 
     // TODO: maybe dont store ,,/,,/ .. right here
-    strcpy(fileSettings.statsFileName, "../../../../res/bin/stats.bin\0");
+    strcpy(fileSettings.statsFileName, "stats.bin\0");
     fileSettings.statsFileNameLen = strlen(fileSettings.statsFileName);
 
     // memcpy because gameSettings has const vars and cant assign it

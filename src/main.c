@@ -10,7 +10,7 @@
 /* FUNCTION DECLARATIONS */
 
 void init(); // starts main menu and prepares all needed vars
-void display_main_menu(struct settings_t* settings, struct dict_t* colourDict);
+void display_main_menu(struct settings_t* settings, struct stats_t* stats, struct dict_t* colourDict);
 void quit(struct settings_t* settings, struct dict_t* colourDict); // frees all rescources and quits  NOTE: add stats when done
 
 /* -------------------------------------------------------------------------- */
@@ -43,19 +43,19 @@ void init(){
     // get settings
     struct settings_t* settings = init_settings("settings.bin", colourDict);
     // get stats
-    // TODO:
+    struct stats_t* stats = init_stats("stats.bin");
 
     // set rand seed
     srand(time(NULL));
 
     // launch main menu
-    display_main_menu(settings, colourDict);
+    display_main_menu(settings, stats, colourDict);
 
     // after main menu quit -> free all rescources
     quit(settings, colourDict);
 }
 
-void display_main_menu(struct settings_t* settings, struct dict_t* colourDict){
+void display_main_menu(struct settings_t* settings, struct stats_t* stats, struct dict_t* colourDict){
 
     short menuNO;
     bool exitCheck;
@@ -92,7 +92,7 @@ void display_main_menu(struct settings_t* settings, struct dict_t* colourDict){
         }
 
         if(menuNO == 1){ // start new game
-            game_loop(settings, colourDict);
+            game_loop(settings, stats, colourDict);
         }else if(menuNO == 2){ // show stats menu
             // TODO:
         }else if(menuNO == 3){ // show settings menu

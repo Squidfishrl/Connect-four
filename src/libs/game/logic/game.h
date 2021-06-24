@@ -3,31 +3,36 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys\timeb.h>
 
 #include "../board/board.h"
+#include "../stats/stats.h"
 
 /* -------------------------------------------------------------------------- */
 
 
 /* FUNCTION DECLARATIONS */
 
-void game_loop(struct settings_t* settings, struct dict_t* colourDict);
+void game_loop(struct settings_t* settings, struct stats_t* stats, struct dict_t* colourDict);
 short add_piece(struct matrix_t* matrix, short player, short position);
 short check_win(struct matrix_t* matrix, short player, short position, short connectAmount);
 void log_moves(struct matrix_t* matrix, short moves[], short max_moves, char *log_name, struct playerSettings_t* settings);
+short bot_move(struct matrix_t* matrix, short depth);
 
 /* -------------------------------------------------------------------------- */
 
 
 /* FUNCTION DEFINITIONS */
 
-void game_loop(struct settings_t* settings, struct dict_t* colourDict)
+void game_loop(struct settings_t* settings, struct stats_t* stats, struct dict_t* colourDict)
 {
     struct matrix_t* matrix = create_matrix(settings->gameSettings.boardRows, settings->gameSettings.boardColumns);
 
     char log_name[settings->fileSettings.logFileNameLen + strlen("../res/")];
     sprintf(log_name, "../res/%s", settings->fileSettings.logFileName);
     // strcat(log_name, settings->fileSettings.logFileName);
+    char stats_name[settings->fileSettings.statsFileNameLen + strlen("../res/bin/")];
+    strcpy(stats_name, strcat("../res/bin/", settings->fileSettings.statsFileName));
 
 	short player = 1;
 	short position = 0;
@@ -37,6 +42,14 @@ void game_loop(struct settings_t* settings, struct dict_t* colourDict)
 	short moves[max_moves];
     memset(moves, 0, max_moves*sizeof(short));
 
+    stats->total_games++;
+    for (int x = 0; x < settings->gameSettings.playerAmount; x++)
+	{
+		stats->player[x].games++;
+	}
+
+    struct timeb start, stop;
+    ftime(&start);
 
 	// Get player input - Done
 	// Verify input - Done
@@ -54,12 +67,12 @@ void game_loop(struct settings_t* settings, struct dict_t* colourDict)
             printf("%d/%d \n", i, max_moves);
 			printf("Player %hd: ", player);
 
-            while(get_short_from_char(&position, 1, matrix->columns, "Invalid position!\nchoose column: ") != true){
-                // msg repeating because if get_short exits from esc it won't say any msg
-                printf("Invalid position!\nchoose column: ");
-            };
+			while(get_short_from_char(&position, 1, matrix->columns, "Invalid position!\nChoose column: ") != true){
+				// msg repeating because if get_short exits from esc it won't say any msg
+				printf("Invalid position!\nChoose column: ");
+			};
 
-            position--;
+			position--;
 
 			switch (add_piece(matrix, player, position))
 			{
@@ -84,28 +97,39 @@ void game_loop(struct settings_t* settings, struct dict_t* colourDict)
 		}
 
 		moves[i] = position+1;
-
+		stats->total_moves++;
+		stats->player[player-1].moves++;
 
         print_matrix(matrix, settings, colourDict);
 
-
-
         // win condition
-        if(check_win(matrix, player, position, settings->gameSettings.connectAmount)){
-
+        if(check_win(matrix, player, position, settings->gameSettings.connectAmount))
+		{
+			stats->total_wl++;
+			stats->player[player-1].wins++;
+			stats->player[player-1].losses--;
+			for (int x = 0; x < settings->gameSettings.playerAmount; stats->player[x++].losses++);
             print_matrix(matrix, settings, colourDict); // to highlight winning nodes
             printf("Player %hd wins!\n", player);
 
             break;
         } // draw condition
-        else if (i == max_moves-1){
+        else if (i >= max_moves-1){
+			stats->total_draws++;
+			for (int x = 0; x < settings->gameSettings.playerAmount; stats->player[x++].draws++);
             printf("No more moves - Draw!\n");
             break;
         }
 	}
 
+	ftime(&stop);
+	long long playtime = (int)(1000.0 * (stop.time - start.time) + (stop.millitm - stop.millitm));
+	stats->total_playtime += playtime;
+	for (int x = 0; x < settings->gameSettings.playerAmount; stats->player[x++].playtime += playtime);
+
 	// log_moves(matrix, moves, max_moves, log_name);
     log_moves(matrix, moves, max_moves, log_name, settings->playerSettings);
+    write_stats_file(stats, stats_name);
     printf("Press any key to continue: ");
     getchar();
 	return;
@@ -244,6 +268,11 @@ void log_moves(struct matrix_t* matrix, short moves[], short max_moves, char* lo
     fclose(log_file);
 
 	return;
+}
+
+short bot_move(struct matrix_t* matrix, short depth)
+{
+	return 0;
 }
 
 /* -------------------------------------------------------------------------- */
