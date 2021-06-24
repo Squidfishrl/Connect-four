@@ -61,7 +61,7 @@ bool get_short_from_char(void* var, short minVal, short maxVal, char* errmsg){
         }
 
         // 10 - 35
-        if(*(short*)var >= 'A' && *(short*)var <= 'Z'){
+        if(*(short*)var >= 'A' && *(short*)var <= '_'){  // _  - 'A' + 10 =  40 which is max column size while Z would account for 36 columns
             *(short*)var = *(short*)var - 'A' + 10;
 
             if(*(short*)var >= minVal && *(short*)var <= maxVal){
