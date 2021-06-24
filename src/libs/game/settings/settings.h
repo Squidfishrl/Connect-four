@@ -130,7 +130,19 @@ void add_player(struct playerSettings_t* settings, struct dict_t* colourDict){
 }
 
 void free_settings(struct settings_t* settings){
-    // TODO:
+
+    // free player settings[] players
+    for(short i = 0; i < settings->playerSettings->playerArrSize; i++){
+        free(settings->playerSettings->playerSettings[i]);
+    }
+    // free player settings arr
+    free(settings->playerSettings->playerSettings);
+    // free player settings
+    free(settings->playerSettings);
+
+    // free settigs
+    free(settings);
+
 }
 
 bool read_settings(char* fileName, struct settings_t* settings){
