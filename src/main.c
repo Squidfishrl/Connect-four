@@ -32,15 +32,25 @@ int main(int argc, char const *argv[]) {
 /* FUNCTION DEFINITIONS */
 
 void quit(struct settings_t* settings, struct dict_t* colourDict){
+
+    log_stderr(1, "Freeing settings");
     free_settings(settings);
+
+    log_stderr(1, "Freeing colour dictionary");
     free_dict(colourDict);
+
+    return;
 }
 
 void init(){
 
+    log_stderr(1, "Launching program");
+
     // get colour dict
+    log_stderr(1, "Initializing colour dictionary");
     struct dict_t* colourDict = init_colour_dict();
     // get settings
+    log_stderr(1, "Initializing settings");
     struct settings_t* settings = init_settings("settings.bin", colourDict);
     // get stats
     // TODO:
@@ -49,6 +59,7 @@ void init(){
     srand(time(NULL));
 
     // launch main menu
+    log_stderr(1, "Displaying main menu");
     display_main_menu(settings, colourDict);
 
     // after main menu quit -> free all rescources
@@ -92,10 +103,12 @@ void display_main_menu(struct settings_t* settings, struct dict_t* colourDict){
         }
 
         if(menuNO == 1){ // start new game
+            log_stderr(1, "Launching game");
             game_loop(settings, colourDict);
         }else if(menuNO == 2){ // show stats menu
-            // TODO:
+            log_stderr(1, "Displaying stats menu");
         }else if(menuNO == 3){ // show settings menu
+            log_stderr(1, "Displaying settings menu");
             display_settings_menu(settings, colourDict);
         }
 

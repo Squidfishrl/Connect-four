@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#include "log.h"
 
 /* -------------------------------------------------------------------------- */
 
@@ -46,10 +47,12 @@ char fetch_random_colour(struct dict_t* colourDict);
 /* FUNCTION DEFINITIONS */
 
 char fetch_random_colour(struct dict_t* colourDict){
+    log_stderr(0, "Fetching random colour from colour dictionary");
     return(colourDict->nodeArr[rand() % (colourDict->currentSize - 1)].key);
 }
 
 void print_colour_dict(struct dict_t* colourDict){
+    log_stderr(0, "Printing colour dictionary");
 
     for(short i = 0; i<colourDict->currentSize; i++){
 
@@ -71,6 +74,9 @@ struct dict_t* init_colour_dict(){
     struct dict_t* dict = init_dict(12);
 
     // colours
+
+    log_stderr(0, "Adding dictionary entries");
+
     add_node('B', "\033[30m", dict);  // black
     add_node('R', "\033[31m", dict);  // red
     add_node('G', "\033[32m", dict);  // green
@@ -98,6 +104,8 @@ void swap(struct dictNode_t* node1, struct dictNode_t* node2){
 }
 
 void sort_dict(struct dict_t* dict){
+
+    log_stderr(0, "Sorting dictionary by keys");
         // bubble sort, because I assume they will be inserted in a somewhat order and thats where bubble sort excells
     bool swaps;
     for(short i = 0; i < dict->currentSize; i++){
@@ -124,22 +132,44 @@ void sort_dict(struct dict_t* dict){
 struct dict_t* init_dict(short maxSize){
 
     struct dict_t* newDict = (struct dict_t*)malloc(sizeof(struct dict_t));
+    if(newDict == NULL){
+        log_stderr(3, "Memory allocation failed on dictionary initialization");
+        return NULL;
+    }else{
+        log_stderr(0, "Successfully allocated memory for dictionary");
+    }
     newDict->maxSize = maxSize;
     newDict->currentSize = 0;
     newDict->nodeArr = (struct dictNode_t*)malloc(sizeof(struct dictNode_t) * maxSize);
+    if(newDict->nodeArr == NULL){
+        log_stderr(3, "Memory allocation failed on dictionary->nodeArr initialization");
+        return NULL;
+    }else{
+        log_stderr(0, "Successfully allocated memory for dictionary->nodeArr");
+    }
 
     return newDict;
 }
 
 void add_node(char key, char* value, struct dict_t* dict){
 
-    // if dict is full or key isnt a capital letter
-    if(dict->maxSize == dict->currentSize || (key < 'A' || key > 'Z')){
-        printf("dict max size reached / key isnt a capital letter");
+
+    // if dict is full or key isnt a capital letter return
+    if(dict->maxSize == dict->currentSize){
+        log_stderr(2, "Dictionary full - cannot add new entry");
+        return;
+    }else if(key < 'A' || key > 'Z'){
+        char logMsg[30];
+        sprintf(logMsg, "Invalid dictionary key [%s]", &key);
+        log_stderr(2, logMsg);
         return;
     }else{
+        char logMsg[37]; // Adding dictionary entry [ ] 27 len / key - 1 len value - 9 len
+        sprintf(logMsg, "Adding dictionary entry [%s %s]", &key, value);
+        log_stderr(0, logMsg);
         struct dictNode_t node = {.key = key, .value = value};
         memcpy(&dict->nodeArr[dict->currentSize++], &node, sizeof(struct dictNode_t));
+
     }
 }
 
@@ -156,6 +186,10 @@ char* binary_search_dict(char key, struct dict_t* dict){
         // found key
         if(dict->nodeArr[mid].key == key){
             // printf("%c - %c", dict->nodeArr[mid].key, key);
+            char logMsg[50];
+            sprintf(logMsg, "Found key [%s] in dictionary", &key);
+            log_stderr(0, logMsg);
+
             return dict->nodeArr[mid].value;
         }else if(dict->nodeArr[mid].key < key){
             // key isnt in the min half
@@ -165,7 +199,9 @@ char* binary_search_dict(char key, struct dict_t* dict){
             max = mid-1;
         }
     }
-
+    char logMsg[38];
+    sprintf(logMsg, "Could not find key [%s] in dictionary", &key);
+    log_stderr(2, logMsg);
     return NULL;
 }
 
