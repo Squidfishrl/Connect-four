@@ -7,7 +7,6 @@
 #include <unistd.h>
 #include <stdint.h>
 
-#include "../../general/colours.h"
 #include "../../general/get_stdin.h"
 
 /* -------------------------------------------------------------------------- */
@@ -35,6 +34,7 @@ struct gameSettings_t{
 
     char winHighlightColour;
 
+    bool debugMode;
     /* OPT: if find a way to change terminal font size add settings for that
     setting could be read by a bash script if not possible in c
     */
@@ -287,6 +287,7 @@ struct settings_t* define_settings(struct dict_t* colourDict){
     gameSettings.multiplayer = false;
     gameSettings.playerAmount = 2;
     gameSettings.winHighlightColour = 'G';
+    gameSettings.debugMode = 0;
 
     // default values for player settings
     playerSettings->playerArrSize = 2;
@@ -392,6 +393,10 @@ void display_settings_menu(struct settings_t* settings, struct dict_t* colourDic
             if(changedSettings){
                 // if settings were made write them
                 write_settings(settingsFileName, settings);
+                if(settings->gameSettings.debugMode != log_stderr(0, 0, "Getting debug mode")){
+                    log_stderr(1, 1, "Changed debug mode");
+                }
+
             }
             break;
         }
@@ -496,6 +501,13 @@ bool display_game_settings_menu(struct settings_t* settings, struct dict_t* colo
             .value = &settings->gameSettings.playerAmount,
             .minValue = 2,
             .maxValue = 10
+        },
+        {
+            .name = "change_debug_mode",
+            .description = "Sets the logging detail. Takes affect once you return to main-menu",
+            .value = &settings->gameSettings.debugMode,
+            .minValue = 0,
+            .maxValue = 1
         },
 
         {

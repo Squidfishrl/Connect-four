@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <time.h>
 #include <string.h>
+#include <stdbool.h>
 
 /* -------------------------------------------------------------------------- */
 
@@ -17,7 +18,7 @@
 /* FUNCTION DECLARATIONS */
 
 // writes to stderr which is then redirected to file
-void log_stderr(short level, char* msg);
+bool log_stderr(bool debugMode, short level, char* msg); //returns debug
 
 /* -------------------------------------------------------------------------- */
 
@@ -31,7 +32,13 @@ void log_stderr(short level, char* msg);
 
 /* FUNCTION DEFINITIONS */
 
-void log_stderr(short level, char* msg){
+bool log_stderr(bool debugMode, short level, char* msg){
+    // every time debugMode is 1 -> change debug to true/false
+    static bool debug = false;
+
+    if(debugMode == 1){
+        debug = debug ? 0 : 1;
+    }
     /*
     0 - debug
     1 - info
@@ -43,11 +50,16 @@ void log_stderr(short level, char* msg){
     // assign level
     switch (level){
         case 0:
-            logType = "DEBUG";
-            break;
+            if(debug == 1){
+                logType = "DEBUG";
+                break;
+            }else{
+                return debug;
+            }
         case 1:
             logType = "INFO";
             break;
+
         case 2:
             logType = "WARNING";
             break;
@@ -55,8 +67,8 @@ void log_stderr(short level, char* msg){
             logType = "ERROR";
             break;
         default:
-            log_stderr(2, "Invaild log level");
-            return;
+            log_stderr(0, 2, "Invaild log level");
+            return debug;
     }
 
     time_t now; // seconds in ld
@@ -70,6 +82,7 @@ void log_stderr(short level, char* msg){
     */
 
     fprintf(stderr, "[%s] (%ld) %s\n", logType, now, msg);
+    return debug;
 }
 
 /* -------------------------------------------------------------------------- */
