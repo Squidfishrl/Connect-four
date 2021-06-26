@@ -15,7 +15,10 @@ cd $PATH_TO_SRC # cd to src - game doesnt work when ran from a different directo
 # log time for error log
 {
     echo ""
+    echo ""
+    echo ""
     echo "$(date)"
+    echo ""
 } >> "$PATH_TO_RES/$ERROR_LOG_FILE_NAME"
 
 
