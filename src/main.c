@@ -44,7 +44,9 @@ void quit(struct settings_t* settings, struct dict_t* colourDict){
 
 void init(){
 
-    log_stderr(0, 1, "Launching program");
+    // debug mode active always on launch
+
+    log_stderr(1, 1, "Launching program");
 
     // get colour dict
     log_stderr(0, 1, "Initializing colour dictionary");
@@ -52,6 +54,7 @@ void init(){
     // get settings
     log_stderr(0, 1, "Initializing settings");
     struct settings_t* settings = init_settings("settings.bin", colourDict);
+    log_stderr(!settings->gameSettings.debugMode, 1, "Initializing settings"); // return back to debugmode from settings
     // get stats
     // TODO:
 

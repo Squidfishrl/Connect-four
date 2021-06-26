@@ -393,9 +393,6 @@ void display_settings_menu(struct settings_t* settings, struct dict_t* colourDic
             if(changedSettings){
                 // if settings were made write them
                 write_settings(settingsFileName, settings);
-                if(settings->gameSettings.debugMode != log_stderr(0, 0, "Getting debug mode")){
-                    log_stderr(1, 1, "Changed debug mode");
-                }
 
             }
             break;
@@ -503,8 +500,8 @@ bool display_game_settings_menu(struct settings_t* settings, struct dict_t* colo
             .maxValue = 10
         },
         {
-            .name = "change_debug_mode",
-            .description = "Sets the logging detail. Takes affect once you return to main-menu",
+            .name = "debug_mode",
+            .description = "Sets the logging detail. Takes instant effect (still have to go to main menu to save settings)",
             .value = &settings->gameSettings.debugMode,
             .minValue = 0,
             .maxValue = 1
@@ -557,21 +554,32 @@ bool display_game_settings_menu(struct settings_t* settings, struct dict_t* colo
         printf("%s%s DESCRIPTION: %s %s\n", heavy, white, def, settingsArr[settingsNO - 1].description);
         printf("%s%s VALUE RANGE: %s (%hd-%hd)\n", heavy, white, def, settingsArr[settingsNO - 1].minValue, settingsArr[settingsNO - 1].maxValue);
 
-        // special case for char val setting
+        // different print msg for win highlight
         if(strcmp(settingsArr[settingsNO - 1].name, "win_highlight_colour") == 0){
             print_colour_dict(colourDict);
-            printf("\n\n%s%s CURRENT VALUE:%s '%c'\n", heavy, white, def, *(char*)settingsArr[settingsNO - 1].value);
+            printf("\n\n%s%s CURRENT VALUE:%s '%c'\n", heavy, white, def, *(short*)settingsArr[settingsNO - 1].value);
+            printf("\n%s%s NEW VALUE: %s", heavy, white, def);
+        // different print msg for change debug mode
+    }else if(strcmp(settingsArr[settingsNO - 1].name, "debug_mode") == 0){
+            printf("%s%s CURRENT VALUE: %s %hd\n", heavy, white, def, log_stderr(0, 0, "Fetching debug mode"));
+            printf("\n%s%s CHANGE VALUE %s(1-yes / 0-no / ESC-no): ", heavy, white, def);
         }else{
             printf("%s%s CURRENT VALUE: %s %hd\n", heavy, white, def, *(short*)settingsArr[settingsNO - 1].value);
+            printf("\n%s%s NEW VALUE: %s", heavy, white, def);
         }
 
-        printf("\n%s%s NEW VALUE: %s", heavy, white, def);
+
 
         // if new value is assigned change settingsChange to true
         if(settingsArr[settingsNO - 1].maxValue == 1 && settingsArr[settingsNO - 1].minValue == 0){
 
             if(get_bool(settingsArr[settingsNO-1].value, errmsg2)){
                 settingsChange = true;
+
+                // change debug mode instantly (also change game settings debug mode to new debug mode)
+                if(strcmp(settingsArr[settingsNO - 1].name, "debug_mode") == 0){
+                    settings->gameSettings.debugMode = log_stderr(settingsArr[settingsNO - 1].value, 0, "Getting debug and (maybe) changing debug mode based on user input");
+                }
             }
         }else{
             if(get_short(settingsArr[settingsNO-1].value, settingsArr[settingsNO-1].minValue, settingsArr[settingsNO-1].maxValue, errmsg2)){

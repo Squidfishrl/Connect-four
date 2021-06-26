@@ -114,15 +114,17 @@ bool get_short(void* var, short minVal, short maxVal, char* errmsg){
     scanf("%hd", (short*)var);
     char inputBufferRead = getchar();
 
+    // if escape is first key that was pressed return without changing var
+    if(inputBufferRead == 27){
+        log_stderr(0, 0, "Exiting input fetch (ESC pressed)");
+        clear_stdin(); // clear stdin incase escape was pressed multiple times to not  instant exit
+        return false;
+    }
+
+
     while((inputBufferRead != EOF && inputBufferRead != '\n') || (*(short*)var < minVal || *(short*)var > maxVal)){
         log_stderr(0, 2, "Invalid input - Out of bounds");
 
-        // if escape is first key that was pressed return without changing var
-        if(inputBufferRead == 27){
-            log_stderr(0, 0, "Exiting input fetch (ESC pressed)");
-            clear_stdin(); // clear stdin incase escape was pressed multiple times to not  instant exit
-            return false;
-        }
 
         // clear rest of stdin buffer so that msg isnt printed twice when a str is inputed]
         clear_stdin();
@@ -146,15 +148,15 @@ bool get_bool(void* var, char* errmsg){
     scanf("%hd", &holdVal);
     char inputBufferRead = getchar();
 
+    // if escape is first key that was pressed return without changing var
+    if(inputBufferRead == 27){
+        log_stderr(0, 0, "Exiting input fetch (ESC pressed)");
+        clear_stdin();
+        return false;
+    }
+
     while((inputBufferRead != EOF && inputBufferRead != '\n') || (holdVal < 0 || holdVal > 1)){
         log_stderr(0, 2, "Invalid input - Out of bounds");
-
-        // if escape is first key that was pressed return without changing var
-        if(inputBufferRead == 27){
-            log_stderr(0, 0, "Exiting input fetch (ESC pressed)");
-            clear_stdin();
-            return false;
-        }
 
         // clear rest of stdin buffer [so that msg isnt printed twice when a str is inputed]
         clear_stdin();
