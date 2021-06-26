@@ -66,7 +66,12 @@ void print_colour_dict(struct dict_t* colourDict){
 }
 
 void free_dict(struct dict_t* dict){
+    log_stderr(0, 1, "Freeing dictionary");
+
+    log_stderr(0, 0, "Freeing dictionary node arr");
     free(dict->nodeArr);
+
+    log_stderr(0, 0, "Freeing dictionary");
     free(dict);
 }
 

@@ -33,10 +33,10 @@ int main(int argc, char const *argv[]) {
 
 void quit(struct settings_t* settings, struct dict_t* colourDict){
 
-    log_stderr(0, 1, "Freeing settings");
+    // free settings
     free_settings(settings);
 
-    log_stderr(0, 1, "Freeing colour dictionary");
+    // free dictionary
     free_dict(colourDict);
 
     return;
@@ -45,16 +45,28 @@ void quit(struct settings_t* settings, struct dict_t* colourDict){
 void init(){
 
     // debug mode active always on launch
-
     log_stderr(1, 1, "Launching program");
 
     // get colour dict
     log_stderr(0, 1, "Initializing colour dictionary");
     struct dict_t* colourDict = init_colour_dict();
+    // check if dict failed
+    if(colourDict == 0){
+        log_stderr(0, 3, "Failed initializing settings");
+        quit(NULL, colourDict);
+    }
+
     // get settings
     log_stderr(0, 1, "Initializing settings");
     struct settings_t* settings = init_settings("settings.bin", colourDict);
-    log_stderr(!settings->gameSettings.debugMode, 1, "Initializing settings"); // return back to debugmode from settings
+    // check if settings failed
+    if(settings == NULL){
+        log_stderr(0, 3, "Failed initializing settings");
+        quit(settings, colourDict);
+    }
+
+    log_stderr(!settings->gameSettings.debugMode, 0, "Setting debug mode to last launch debug mode"); // return back to debugmode from settings
+
     // get stats
     // TODO:
 
@@ -62,7 +74,6 @@ void init(){
     srand(time(NULL));
 
     // launch main menu
-    log_stderr(0, 1, "Displaying main menu");
     display_main_menu(settings, colourDict);
 
     // after main menu quit -> free all rescources
