@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../board/board.h"
+#include "../stats/stats.h" // has all the other headers included
 
 /* -------------------------------------------------------------------------- */
 

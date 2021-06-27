@@ -10,7 +10,7 @@
 /* FUNCTION DECLARATIONS */
 
 void init(); // starts main menu and prepares all needed vars
-void display_main_menu(struct settings_t* settings, struct dict_t* colourDict);
+void display_main_menu(struct settings_t* settings, struct dict_t* colourDict, struct stats_t* stats);
 void quit(struct settings_t* settings, struct dict_t* colourDict); // frees all rescources and quits  NOTE: add stats when done
 
 /* -------------------------------------------------------------------------- */
@@ -80,23 +80,23 @@ void init(){
         return;
     }
 
-    log_stderr(!settings->gameSettings.debugMode, 0, "Changing debug mode from settings"); // return back to debugmode from settings
-
     // get stats
     // TODO:
+
+    log_stderr(!settings->gameSettings.debugMode, 0, "Changing debug mode from settings"); // return back to debugmode from settings
 
     // set rand seed
     log_stderr(0, 0, "Generating seed");
     srand(time(NULL));
 
     // launch main menu
-    display_main_menu(settings, colourDict);
+    display_main_menu(settings, colourDict, NULL);
 
     // after main menu quit -> free all rescources
     quit(settings, colourDict);
 }
 
-void display_main_menu(struct settings_t* settings, struct dict_t* colourDict){
+void display_main_menu(struct settings_t* settings, struct dict_t* colourDict, struct stats_t* stats){
 
     log_stderr(0, 1, "Displaying main menu");
 
@@ -137,12 +137,13 @@ void display_main_menu(struct settings_t* settings, struct dict_t* colourDict){
         }
 
         if(menuNO == 1){ // start new game
-            // log_stderr(0, 1, "Launching game");
+
             game_loop(settings, colourDict);
         }else if(menuNO == 2){ // show stats menu
-            // log_stderr(0, 1, "Displaying stats menu");
+
+            display_stats_menu(stats, colourDict);
         }else if(menuNO == 3){ // show settings menu
-            // log_stderr(0, 1, "Displaying settings menu");
+
             display_settings_menu(settings, colourDict);
         }
 
