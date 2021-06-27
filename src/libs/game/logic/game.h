@@ -23,7 +23,16 @@ void log_moves(struct matrix_t* matrix, short moves[], short max_moves, char *lo
 
 void game_loop(struct settings_t* settings, struct dict_t* colourDict)
 {
+
+    log_stderr(0, 1, "Starting game loop");
+
     struct matrix_t* matrix = create_matrix(settings->gameSettings.boardRows, settings->gameSettings.boardColumns);
+    if(matrix == NULL){
+        log_stderr(0, 3, "Failed creating matrix");
+        return;
+    }else{
+        log_stderr(0, 0, "Successfully created matrix");
+    }
 
     char log_name[settings->fileSettings.logFileNameLen + strlen("../res/")];
     sprintf(log_name, "../res/%s", settings->fileSettings.logFileName);
@@ -54,6 +63,7 @@ void game_loop(struct settings_t* settings, struct dict_t* colourDict)
             printf("%d/%d \n", i, max_moves);
 			printf("Player %hd: ", player);
 
+            log_stderr(0, 0, "Ask player for column pick");
             while(get_short_from_char(&position, 1, matrix->columns, "Invalid position!\nchoose column: ") != true){
                 // msg repeating because if get_short exits from esc it won't say any msg
                 printf("Invalid position!\nchoose column: ");
@@ -93,30 +103,33 @@ void game_loop(struct settings_t* settings, struct dict_t* colourDict)
         // win condition
         if(check_win(matrix, player, position, settings->gameSettings.connectAmount)){
 
+            log_stderr(0, 1, "Game over - a player won");
             print_matrix(matrix, settings, colourDict); // to highlight winning nodes
             printf("Player %hd wins!\n", player);
             break;
         } // draw condition
         else if (i == max_moves-1){
+            log_stderr(0, 1, "Game over - a draw");
+            print_matrix(matrix, settings, colourDict); // to hide log msg
             printf("No more moves - Draw!\n");
             break;
         }
 	}
 
 	// log_moves(matrix, moves, max_moves, log_name);
-    log_moves(matrix, moves, max_moves, log_name, settings->playerSettings);
     printf("Press any key to continue: ");
     getchar();
+    // log and free after getchar so that logging isnt shown on screen
+    log_moves(matrix, moves, max_moves, log_name, settings->playerSettings);
     free_matrix(matrix);
 	return;
 }
 
 short add_piece(struct matrix_t* matrix, short player, short position)
 {
-    /* TODO: maybe add another argument struct node_t* node.
-    its then pointed to the new piece. Could be useful to then pass it to check_win
-    making it O(1) - even though there are some fors they iterate 7 times max(no matter the arguments)
-    */
+
+    log_stderr(0, 0, "Adding piece");
+
 	if (position < 0 || position >= matrix->columns)
 	{
 		return 1;
@@ -141,6 +154,14 @@ short add_piece(struct matrix_t* matrix, short player, short position)
 
 short check_win(struct matrix_t* matrix, short player, short position, short connectAmount)
 {
+
+    /* TODO: maybe add another argument struct node_t* node.
+    its then pointed to the new piece. Could be useful to then pass it to check_win
+    making it O(1) - even though there are some fors they iterate 7 times max(no matter the arguments)
+    */
+
+    log_stderr(0, 0, "Checking for win");
+
     struct node_t* start = get_node_by_cords(matrix, matrix->rows-1, position), *node;
     short piece_count;
     bool checkWin = false;
@@ -197,14 +218,20 @@ short check_win(struct matrix_t* matrix, short player, short position, short con
 
 void log_moves(struct matrix_t* matrix, short moves[], short max_moves, char* log_name, struct playerSettings_t* settings)
 {
+
+    log_stderr(0, 1, "Logging moves");
+
     // printf("%s\n\n", log_name);
 	FILE* log_file;
 
-	if ((log_file = fopen(log_name, "a")));			// Try to open file
+	if ((log_file = fopen(log_name, "a"))){
+        log_stderr(0, 0, "Successfully opened log file");
+    }		// Try to open file
 	// else if((log_file = fopen(log_name, "w+")));	// File doesn't exist; try to create it (unneeded with "a" mode)
-	else										// Can't create file
+    else										// Can't create file
 	{
-		printf("Failed to create or open log_file file!\n");
+        log_stderr(0, 3, "Failed to create or open log file");
+		// printf("Failed to create or open log_file file!\n");
 		return;
 	}
 
@@ -218,6 +245,7 @@ void log_moves(struct matrix_t* matrix, short moves[], short max_moves, char* lo
 
 	// Copy of print_matrix but with fprintf()
 
+    log_stderr(0, 0, "Fprinting matrix");
     // iterate through rows
     for(struct node_t* iterNode1 = get_node_by_cords(matrix, matrix->rows-1, 0); iterNode1 != NULL; iterNode1 = iterNode1->down){
 
