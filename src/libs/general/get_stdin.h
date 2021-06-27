@@ -19,13 +19,82 @@
 bool get_short(void* var, short minVal, short maxVal, char* errmsg); // returns if changes were made -> escape to cancel
 bool get_short_from_char(void* var, short minVal, short maxVal, char* errmsg); // 0-9 and A-Z
 bool get_bool(void* var, char* errmsg);
+bool get_validated_str(char* var, short minSize, short maxSize, char* errmsg);
 char clear_stdin(); // returns the first char it scnaned
 
 /* -------------------------------------------------------------------------- */
 
 
-/* FUNCTI
-  clear_stdin(); // clear stdin incase escape was pressed multiple times to not  instant exitON DEFINITIONS */
+/* FUNCTION DEFINITIONS */
+
+bool get_validated_str(char* var, short minSize, short maxSize, char* errmsg){
+
+    char tempVar[maxSize+5]; //.txt\0
+    short i;
+
+    bool valid = false;
+
+    while(valid == false){
+        log_stderr(0, 0, "Fetching validated str");
+
+        valid = true;
+
+        if(fgets(tempVar, maxSize, stdin) == NULL){
+            // error occured
+            log_stderr(0, 3, "Fgets failed");
+            return false;
+        }
+
+        // exit on esc key press
+        if(tempVar[0] == 27){
+            log_stderr(0, 0, "Exiting input fetch (ESC pressed)");
+            return false;
+        }
+
+        // iterate through inputed chars and validate them
+
+        log_stderr(0, 0, "Validating input");
+        for(i = 0; i<maxSize; i++){
+
+            // on last char - fgets adds \n at the end
+            if(tempVar[i] == '\n'){
+
+                tempVar[i] = '.';
+                tempVar[i+1] = 't';
+                tempVar[i+2] = 'x';
+                tempVar[i+3] = 't';
+                tempVar[i+4] = '\0';
+                break;
+            }
+
+            // on invalid char - not - a-z; A-Z; 0-9; - set valid to false
+            if( !( (tempVar[i] >= 'a' && tempVar[i] <= 'z') || (tempVar[i] >= 'A' && tempVar[i] <= 'Z') || (tempVar[i] >= '0' && tempVar[i] <= '9') || (tempVar[i] == '_') ) ){
+                char logMsg[20];
+                sprintf(logMsg, "Invalid char '%c'", tempVar[i]);
+                log_stderr(0, 2, logMsg);
+                printf("%s (Size: %d-%d)", errmsg, minSize, maxSize);
+                valid = false;
+                break;
+            }
+        }
+
+        // str input is too small enough
+        if(i < minSize){
+            // str entered is too small
+            log_stderr(0, 2, "str input is too small < minSize");
+            printf(errmsg);
+            valid = false;
+            continue;
+        }
+    }
+
+    // change var
+
+    strcpy(var, tempVar);
+    // NOTE: strcpy could fail, perhaps if varSize < tempVarSize
+
+    return true;
+}
 
 bool get_short_from_char(void* var, short minVal, short maxVal, char* errmsg){
 

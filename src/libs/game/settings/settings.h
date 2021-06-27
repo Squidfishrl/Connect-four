@@ -98,6 +98,7 @@ void add_player(struct playerSettings_t* settings, struct dict_t* colourDict);
 void display_settings_menu(struct settings_t* settings, struct dict_t* colourDict); // NOTE: could add filename depending what I do in it
 bool display_game_settings_menu(struct settings_t* settings, struct dict_t* colourDict); // returns if changes were made
 bool display_player_settings_menu(struct settings_t* settings, struct dict_t* colourDict);
+bool display_file_settings_menu(struct settings_t* settings, struct dict_t* colourDict);
 
 /* -------------------------------------------------------------------------- */
 
@@ -788,7 +789,10 @@ void display_settings_menu(struct settings_t* settings, struct dict_t* colourDic
                 changedSettings = true;
             }
         }else{
-            // TODO: file settings
+            if(display_file_settings_menu(settings, colourDict)){
+                log_stderr(0, 0, "Acknowledging changes made in file settings menu");
+                changedSettings = true;
+            }
         }
 
     }
@@ -1156,6 +1160,60 @@ bool display_player_settings_menu(struct settings_t* settings, struct dict_t* co
     }
 
     return settingsChange;
+}
+
+bool display_file_settings_menu(struct settings_t* settings, struct dict_t* colourDict){
+
+    bool exitCheck;
+    bool settingsChange = false;
+    short settingsNO;
+    char* errmsg = "\n Invalid input! Try again\n go to";
+
+    // fetch colours
+    const char *flash, *white, *def, *yellow, *heavy;
+    flash = binary_search_dict('F', colourDict);
+    white = binary_search_dict('W', colourDict);
+    def = binary_search_dict('D', colourDict);
+    heavy = binary_search_dict('H', colourDict);
+    yellow = binary_search_dict('Y', colourDict);
+
+    while(1){
+        system("clear");
+
+        printf("%s%s CONNECT FOUR %s", heavy, yellow, def);
+        printf("%s (file-settings) %s\n\n", yellow, def);
+
+        printf(" %s-%s%s 1) change log name (%s) %s\n", flash, def, white, settings->fileSettings.logFileName, def);
+        printf(" %s-%s%s 2) BACK %s\n", flash, def, white, def);
+
+        exitCheck = !get_short(&settingsNO, 1, colourDict->currentSize, errmsg);
+
+        if(settingsNO == 2 || exitCheck == true){
+            break;
+        }
+
+        if(settingsNO == 1){
+
+            system("clear");
+
+            printf("%s%s CONNECT FOUR %s", heavy, yellow, def);
+            printf("%s (file-settings-log) %s\n\n", yellow, def);
+
+            printf("\n %s%s NEW FILENAME: %s", heavy, white, def);
+
+            if(get_validated_str(settings->fileSettings.logFileName, 1, 31-5, errmsg)){
+                settings->fileSettings.logFileNameLen = strlen(settings->fileSettings.logFileName);
+                settingsChange = true;
+                continue;
+            }else{
+                continue; // loop again
+            }
+        }
+    }
+
+
+    return settingsChange;
+
 }
 
 /* -------------------------------------------------------------------------- */
