@@ -30,4 +30,9 @@ cd $PATH_TO_SRC # cd to src - game doesnt work when ran from a different directo
     $DELETE_OUT
 } 3>&2 2>&1 1>&3 | tee -a "$PATH_TO_RES/$ERROR_LOG_FILE_NAME" # Redirect stderr (for error handling) while preserving stdout
 
+# tee reads stream and writes it to both standard output and one or more files, effectively duplicating its input.
+# this can cause visual issues in this case if im writing to stderr too much (thus why debug mode is off by default)
+
+
 # Dont have to go back to original dir because the script is ran in a subshell and is returned to origingal one when it ends
+# easier solution than redirecting stderr from c code because on user termination stderr wont return to where its usally
