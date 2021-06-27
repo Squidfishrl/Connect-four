@@ -95,7 +95,6 @@ void game_loop(struct settings_t* settings, struct dict_t* colourDict)
 
             print_matrix(matrix, settings, colourDict); // to highlight winning nodes
             printf("Player %hd wins!\n", player);
-
             break;
         } // draw condition
         else if (i == max_moves-1){
@@ -108,6 +107,7 @@ void game_loop(struct settings_t* settings, struct dict_t* colourDict)
     log_moves(matrix, moves, max_moves, log_name, settings->playerSettings);
     printf("Press any key to continue: ");
     getchar();
+    free_matrix(matrix);
 	return;
 }
 

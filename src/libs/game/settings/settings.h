@@ -121,10 +121,10 @@ void add_player(struct playerSettings_t* settings, struct dict_t* colourDict){
     settings->playerSettings[settings->playerArrSize-1] = (struct player_t*)malloc(sizeof(struct player_t));
     // check if malloc failed
     if(settings->playerSettings[settings->playerArrSize-1] == NULL){
-        log_stderr(0, 3, "allocating player failed");
+        log_stderr(0, 3, "Allocating memory for player failed");
         return;
     }else{
-        log_stderr(0, 0, "Successfully allocated player settings");
+        log_stderr(0, 0, "Successfully allocated memory player settings");
     }
     //assign number
     log_stderr(0, 0, "Assigning player number");
