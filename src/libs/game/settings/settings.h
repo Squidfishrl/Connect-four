@@ -972,7 +972,7 @@ bool display_game_settings_menu(struct settings_t* settings, struct dict_t* colo
 
                 // change debug mode instantly (also change game settings debug mode to new debug mode)
                 if(strcmp(settingsArr[settingsNO - 1].name, "debug_mode") == 0){
-                    settings->gameSettings.debugMode = log_stderr(settingsArr[settingsNO - 1].value, 0, "Getting debug and (maybe) changing debug mode based on user input");
+                    settings->gameSettings.debugMode = log_stderr(*(bool*)settingsArr[settingsNO - 1].value, 0, "Getting debug and (maybe) changing debug mode based on user input");
                 }
             }
         }else{
