@@ -88,7 +88,7 @@ struct displaySettings_t{ // TODO: eventually write/read when im feeling like de
 
 /* FUNCTION DECLARATIONS */
 
-struct settings_t*  init_settings(char* fileName, struct dict_t* colourDict);
+struct settings_t*  init_settings(char* fileName, struct dict_t* colourDict, bool* success);
 struct settings_t* define_settings(struct dict_t* colourDict); // create default settings
 bool read_settings(char* fileName, struct settings_t* settings);
 bool write_settings(char* fileName, struct settings_t* settings);
@@ -152,25 +152,55 @@ void add_player(struct playerSettings_t* settings, struct dict_t* colourDict){
 void free_settings(struct settings_t* settings){
 
     log_stderr(0, 1, "Freeing settings");
+    char logMsg[30];
 
-    // free player settings[] players
-    log_stderr(0, 0, "Freeing players");
+    // check if settings are null
+    if(settings != NULL){
 
-    for(short i = 0; i < settings->playerSettings->playerArrSize; i++){
-        free(settings->playerSettings->playerSettings[i]);
+        // check if player settings are null
+        if(settings->playerSettings != NULL){
+
+            // check if player arr is null
+            if(settings->playerSettings->playerSettings != NULL){
+
+                // free player settings[] players
+                for(short i = 0; i < settings->playerSettings->playerArrSize; i++){
+
+                    // check if player is NULL
+                    if(settings->playerSettings->playerSettings[i] == NULL){
+                        sprintf(logMsg, "Player %hd is already NULL", i);
+                        log_stderr(0, 2, logMsg);
+                    }
+
+                    // free player
+                    sprintf(logMsg, "Freeing player %hd", i);
+                    log_stderr(0, 0, logMsg);
+                    free(settings->playerSettings->playerSettings[i]);
+                }
+                // free player settings array;
+
+            }
+
+            // free player settings
+            log_stderr(0, 0, "Freeing player array");
+            free(settings->playerSettings->playerSettings);
+
+        }else{
+            log_stderr(0, 2, "Player settings is already NULL");
+        }
+
+        // free player settings
+        log_stderr(0, 0, "Freeing player settings");
+        free(settings->playerSettings);
+
+    }else{
+        log_stderr(0, 2, "Settings is already NULL");
     }
-    // free player settings array
-    log_stderr(0, 0, "Freeing player settings array");
 
-    free(settings->playerSettings->playerSettings);
-    // free player settings
-    log_stderr(0, 0, "Freeing player settings");
-    free(settings->playerSettings);
+    // free settings
 
-    // free settigs
-    log_stderr(0, 0, "settings");
-    free(settings);
-
+    log_stderr(0, 0, "Freeing settings");
+    free(settings); // even tho settings could be null it could still be allocated
 }
 
 bool read_settings(char* fileName, struct settings_t* settings){
@@ -526,7 +556,7 @@ bool write_settings(char* fileName, struct settings_t* settings){
     return true;
 }
 
-struct settings_t*  init_settings(char* fileName, struct dict_t* colourDict){
+struct settings_t*  init_settings(char* fileName, struct dict_t* colourDict, bool* success){
 
     // add correct path to filename
     char editedFileName[strlen(fileName) + strlen("../res/bin/")];
@@ -542,7 +572,8 @@ struct settings_t*  init_settings(char* fileName, struct dict_t* colourDict){
         // check if malloc was successful
         if(settings == NULL){
             log_stderr(0, 3, "Memory allocation failed on settings initialization");
-            return NULL;
+            *success = false;
+            return settings;
         }else{
             log_stderr(0, 0, "Successfully allocated memory for settings");
         }
@@ -557,15 +588,17 @@ struct settings_t*  init_settings(char* fileName, struct dict_t* colourDict){
         //file doesn't exist
         settings = define_settings(colourDict);
         if(settings == NULL){
-            return NULL;
+            *success = false;
+            return settings;
         }
 
         if(!write_settings(editedFileName, settings)){
             printf("Failed to create or open settings file!\n");
-            return NULL;
+            *success = false;
+            return settings;
         }
     }
-
+    *success = true;
     return settings;
 }
 

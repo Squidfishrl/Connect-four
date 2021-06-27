@@ -66,13 +66,30 @@ void print_colour_dict(struct dict_t* colourDict){
 }
 
 void free_dict(struct dict_t* dict){
+
     log_stderr(0, 1, "Freeing dictionary");
 
-    log_stderr(0, 0, "Freeing dictionary node arr");
-    free(dict->nodeArr);
+    // check if dict is null
+    if(dict != NULL){
 
-    log_stderr(0, 0, "Freeing dictionary");
-    free(dict);
+        log_stderr(0, 0, "Freeing dictionary node array");
+        // check if dict node arr is null
+        if(dict->nodeArr != NULL){
+            // free nodde arr
+            free(dict->nodeArr);
+        }else{
+            log_stderr(0, 2, "Dictionary node array is already NULL");
+        }
+
+        log_stderr(0, 0, "Freeing dictionary");
+
+        free(dict);
+
+    }else{
+        log_stderr(0, 2, "Dictionary is already NULL");
+    }
+
+
 }
 
 struct dict_t* init_colour_dict(){

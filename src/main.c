@@ -33,18 +33,15 @@ int main(int argc, char const *argv[]) {
 
 void quit(struct settings_t* settings, struct dict_t* colourDict){
 
-
+    log_stderr(0, 1, "Freeing rescources");
 
     // free dictionary
-    if(colourDict != NULL){
-        free_dict(colourDict);
-    }
+    free_dict(colourDict);
 
     // free settings
     free_settings(settings);
 
-
-    // system("clear");
+    system("clear");
 
     log_stderr(0, 1, "Quitting program");
 
@@ -71,11 +68,13 @@ void init(){
     // get settings
 
     log_stderr(0, 1, "Initializing settings");
+    bool settings_success = false;
 
-    struct settings_t* settings = init_settings("settings.bin", colourDict);
+    struct settings_t* settings = init_settings("settings.bin", colourDict, &settings_success);
+
 
     // check if settings failed
-    if(settings == NULL){
+    if(settings_success == false){
         log_stderr(0, 3, "Failed initializing settings");
         quit(settings, colourDict);
         return;
