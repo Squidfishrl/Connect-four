@@ -27,7 +27,7 @@ struct gameSettings_t{
     bool againstBot; // TODO: add bot option, simple algorithm (minmax) O(columns^depth)
     short botDepth;
 
-    bool multiplayer; // f -> local; t -> TODO: socket connection
+    // bool multiplayer; // f -> local; t -> TODO: socket connection
 
     short playerAmount; // rewrite to feature more players
     const short maxPlayers;
@@ -626,7 +626,7 @@ struct settings_t* define_settings(struct dict_t* colourDict){
     gameSettings.connectAmount = 4;
     gameSettings.againstBot = false;
     gameSettings.botDepth = 4; // O(40^4) worst case
-    gameSettings.multiplayer = false;
+    // gameSettings.multiplayer = false;
     gameSettings.playerAmount = 2;
     gameSettings.winHighlightColour = 'G';
     gameSettings.debugMode = 0;
@@ -870,19 +870,19 @@ bool display_game_settings_menu(struct settings_t* settings, struct dict_t* colo
             .minValue = 1,
             .maxValue = 10
         },
-        {
-            .name = "multiplayer",
-            .description = "[WIP]Allows playing online via socket connections.",
-            .value = &settings->gameSettings.multiplayer,
-            .minValue = 0,
-            .maxValue = 1
-        },
+        // {
+        //     .name = "multiplayer",
+        //     .description = "[WIP]Allows playing online via socket connections.",
+        //     .value = &settings->gameSettings.multiplayer,
+        //     .minValue = 0,
+        //     .maxValue = 1
+        // },
         {
             .name = "player_amount",
-            .description = "[WIP]Sets the amount of players in a game.",
+            .description = "Sets the amount of players in a game.",
             .value = &settings->gameSettings.playerAmount,
             .minValue = 2,
-            .maxValue = 10
+            .maxValue = 9
         },
         {
             .name = "debug_mode",
