@@ -33,44 +33,61 @@ int main(int argc, char const *argv[]) {
 
 void quit(struct settings_t* settings, struct dict_t* colourDict){
 
+
+
+    // free dictionary
+    if(colourDict != NULL){
+        free_dict(colourDict);
+    }
+
     // free settings
     free_settings(settings);
 
-    // free dictionary
-    free_dict(colourDict);
+
+    // system("clear");
+
+    log_stderr(0, 1, "Quitting program");
 
     return;
 }
 
 void init(){
 
-    // debug mode active always on launch
+    // debug mode always active on launch
     log_stderr(1, 1, "Launching program");
 
     // get colour dict
     log_stderr(0, 1, "Initializing colour dictionary");
+
     struct dict_t* colourDict = init_colour_dict();
+
     // check if dict failed
-    if(colourDict == 0){
-        log_stderr(0, 3, "Failed initializing settings");
+    if(colourDict == NULL){
+        log_stderr(0, 3, "Failed initializing colour dictionary");
         quit(NULL, colourDict);
+        return;
     }
 
     // get settings
+
     log_stderr(0, 1, "Initializing settings");
+
     struct settings_t* settings = init_settings("settings.bin", colourDict);
+
     // check if settings failed
     if(settings == NULL){
         log_stderr(0, 3, "Failed initializing settings");
         quit(settings, colourDict);
+        return;
     }
 
-    log_stderr(!settings->gameSettings.debugMode, 0, "Setting debug mode to last launch debug mode"); // return back to debugmode from settings
+    log_stderr(!settings->gameSettings.debugMode, 0, "Changing debug mode from settings"); // return back to debugmode from settings
 
     // get stats
     // TODO:
 
     // set rand seed
+    log_stderr(0, 0, "Generating seed");
     srand(time(NULL));
 
     // launch main menu
@@ -82,9 +99,12 @@ void init(){
 
 void display_main_menu(struct settings_t* settings, struct dict_t* colourDict){
 
+    log_stderr(0, 1, "Displaying main menu");
+
     short menuNO;
     bool exitCheck;
 
+    log_stderr(0, 0, "Fetching colours from colour dict");
     const char *yellow, *def, *flashing, *white, *heavy;
     yellow = binary_search_dict('Y', colourDict);
     def = binary_search_dict('D', colourDict);
@@ -94,7 +114,7 @@ void display_main_menu(struct settings_t* settings, struct dict_t* colourDict){
     char errmsg[] = {" \n Invalid input! Try again\n go to"};
 
     do{
-
+        log_stderr(0, 0, "Printing main menu");
         system("clear");
 
 
@@ -112,17 +132,18 @@ void display_main_menu(struct settings_t* settings, struct dict_t* colourDict){
         exitCheck = !get_short(&menuNO, 1, 4, errmsg);
 
         if(exitCheck == true || menuNO == 4){
+            log_stderr(0, 1, "Exiting program");
             printf("Exiting program!\n");
-            break; // same as return cuz nothing after while(1)
+            break; // OPT: return instead of break?
         }
 
         if(menuNO == 1){ // start new game
-            log_stderr(0, 1, "Launching game");
+            // log_stderr(0, 1, "Launching game");
             game_loop(settings, colourDict);
         }else if(menuNO == 2){ // show stats menu
-            log_stderr(0, 1, "Displaying stats menu");
+            // log_stderr(0, 1, "Displaying stats menu");
         }else if(menuNO == 3){ // show settings menu
-            log_stderr(0, 1, "Displaying settings menu");
+            // log_stderr(0, 1, "Displaying settings menu");
             display_settings_menu(settings, colourDict);
         }
 

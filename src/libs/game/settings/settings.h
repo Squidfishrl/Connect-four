@@ -88,7 +88,7 @@ struct displaySettings_t{ // TODO: eventually write/read when im feeling like de
 
 /* FUNCTION DECLARATIONS */
 
-struct settings_t* init_settings(char* fileName, struct dict_t* colourDict);
+struct settings_t*  init_settings(char* fileName, struct dict_t* colourDict);
 struct settings_t* define_settings(struct dict_t* colourDict); // create default settings
 bool read_settings(char* fileName, struct settings_t* settings);
 bool write_settings(char* fileName, struct settings_t* settings);
@@ -159,8 +159,8 @@ void free_settings(struct settings_t* settings){
     for(short i = 0; i < settings->playerSettings->playerArrSize; i++){
         free(settings->playerSettings->playerSettings[i]);
     }
-    // free player settings arr
-    log_stderr(0, 0, "Freeing player settings arr");
+    // free player settings array
+    log_stderr(0, 0, "Freeing player settings array");
 
     free(settings->playerSettings->playerSettings);
     // free player settings
@@ -175,18 +175,35 @@ void free_settings(struct settings_t* settings){
 
 bool read_settings(char* fileName, struct settings_t* settings){
 
+    log_stderr(0, 1, "Reading settings");
+    char logMsg[80];
     FILE* settingsFile;
 
+
     if((settingsFile = fopen(fileName, "rb"))){
-        log_stderr(0, 0, "Successfully opened settings file");
+        sprintf(logMsg, "Successfully opened %s", fileName);
+        log_stderr(0, 0, logMsg);
         // read game settings
-        log_stderr(0, 0, "Reading game settings");
+        log_stderr(0, 1, "Reading game settings");
         fread(&settings->gameSettings, sizeof(struct gameSettings_t), 1, settingsFile);
 
+        if(ferror(settingsFile)){
+            // read error occured
+            log_stderr(0, 3, "Read error occured");
+            return false;
+        }else if(feof(settingsFile)){
+            // eof too early error
+            log_stderr(0, 3, "Reached EOF too early");
+            return false;
+        }
+
+
         // read player settings
-        log_stderr(0, 0, "Reading player settings");
+        log_stderr(0, 1, "Reading player settings");
+
         // allocate memory for player settings and start reading them
         settings->playerSettings = (struct playerSettings_t*)malloc(sizeof(struct playerSettings_t));
+
         if(settings->playerSettings == NULL){
             log_stderr(0, 3, "Memory allocation failed on player settings");
         }else{
@@ -194,69 +211,251 @@ bool read_settings(char* fileName, struct settings_t* settings){
         }
 
         // read arr size
-        log_stderr(0, 0, "Reading player settings -> player arr size");
+        log_stderr(0, 0, "Reading player array size");
         fread(&settings->playerSettings->playerArrSize, sizeof(uint8_t), 1, settingsFile);
+
+        if(ferror(settingsFile)){
+            // read error occured
+            log_stderr(0, 3, "Read error occured");
+            return false;
+        }else if(feof(settingsFile)){
+            // eof too early error
+            log_stderr(0, 3, "Reached EOF too early");
+            return false;
+        }else{
+            sprintf(logMsg, "Read player array size -> %hd", settings->playerSettings->playerArrSize);
+            log_stderr(0, 0, logMsg);
+        }
 
         // allocate memory for playerSettings->playerSettings
         settings->playerSettings->playerSettings = (struct player_t**)malloc(settings->playerSettings->playerArrSize * sizeof(struct player_t*));
         if(settings->playerSettings->playerSettings == NULL){
-            log_stderr(0, 3, "Memory allocation failed for player settings pointer arr");
+            log_stderr(0, 3, "Memory allocation failed for player pointer array");
         }else{
-            log_stderr(0, 0, "Successfully allocated memory for player settings pointer arr");
+            log_stderr(0, 0, "Successfully allocated memory for player pointer array");
         }
 
         // allocate player_t  for each player and read vars
         for(short i = 0; i<settings->playerSettings->playerArrSize; i++){
 
             settings->playerSettings->playerSettings[i] = (struct player_t*)malloc(sizeof(struct player_t));
+
             if(settings->playerSettings->playerSettings[i] == NULL){
-                log_stderr(0, 3, "Memory allocation failed for player");
+                sprintf(logMsg, "settings->playerSettings->playerArrSize %hd", i+1);
+                log_stderr(0, 3, logMsg);
             }else{
-                log_stderr(0, 0, "Successfully allocated memory for player");
+                sprintf(logMsg, "Successfully allocated memory for player %hd", i+1);
+                log_stderr(0, 0, logMsg);
             }
 
             log_stderr(0, 0, "Reading player number");
+
             fread(&settings->playerSettings->playerSettings[i]->number, sizeof(uint8_t), 1, settingsFile);
+
+            if(ferror(settingsFile)){
+                // read error occured
+                log_stderr(0, 3, "Read error occured");
+                return false;
+            }else if(feof(settingsFile)){
+                // eof too early error
+                log_stderr(0, 3, "Reached EOF too early");
+                return false;
+            }else{
+                sprintf(logMsg, "Read player %hd number - %hd", i+1, settings->playerSettings->playerSettings[i]->number);
+                log_stderr(0, 0, logMsg);
+            }
+
             log_stderr(0, 0, "Reading player colour");
+
             fread(&settings->playerSettings->playerSettings[i]->colour, sizeof(char), 1, settingsFile);
+
+            if(ferror(settingsFile)){
+                // read error occured
+                log_stderr(0, 3, "Read error occured");
+                return false;
+            }else if(feof(settingsFile)){
+                // eof too early error
+                log_stderr(0, 3, "Reached EOF too early");
+                return false;
+            }else{
+                sprintf(logMsg, "Read player %hd colour - %c", i+1, settings->playerSettings->playerSettings[i]->colour);
+                log_stderr(0, 0, logMsg);
+            }
+
             log_stderr(0, 0, "Reading player symbol");
+
             fread(&settings->playerSettings->playerSettings[i]->symbol, sizeof(char), 1, settingsFile);
+
+            if(ferror(settingsFile)){
+                // read error occured
+                log_stderr(0, 3, "Read error occured");
+                return false;
+            }else if(feof(settingsFile)){
+                // eof too early error
+                log_stderr(0, 3, "Reached EOF too early");
+                return false;
+            }else{
+                sprintf(logMsg, "Read player %hd symbol - %c", i+1, settings->playerSettings->playerSettings[i]->symbol);
+                log_stderr(0, 0, logMsg);
+            }
+
             log_stderr(0, 0, "Reading player colour code length");
+
             fread(&settings->playerSettings->playerSettings[i]->colourCodeLen, sizeof(uint8_t), 1, settingsFile);
+
+            if(ferror(settingsFile)){
+                // read error occured
+                log_stderr(0, 3, "Read error occured");
+                return false;
+            }else if(feof(settingsFile)){
+                // eof too early error
+                log_stderr(0, 3, "Reached EOF too early");
+                return false;
+            }else{
+                sprintf(logMsg, "Read player %hd colour code length - %d", i+1, settings->playerSettings->playerSettings[i]->colourCodeLen);
+                log_stderr(0, 0, logMsg);
+            }
+
             log_stderr(0, 0, "Reading player colour code");
+
             fread(settings->playerSettings->playerSettings[i]->colourCode, sizeof(char), settings->playerSettings->playerSettings[i]->colourCodeLen, settingsFile);
+
+            if(ferror(settingsFile)){
+                // read error occured
+                log_stderr(0, 3, "Read error occured");
+                return false;
+            }else if(feof(settingsFile)){
+                // eof too early error
+                log_stderr(0, 3, "Reached EOF too early");
+                return false;
+            }else{
+                sprintf(logMsg, "Read player %hd symbol - %s", i+1, settings->playerSettings->playerSettings[i]->colourCode);
+                log_stderr(0, 0, logMsg);
+            }
         }
 
         // read file settings
-        log_stderr(0, 0, "Reading file settings");
+        log_stderr(0, 1, "Reading file settings");
+
         // log
         log_stderr(0, 0, "Reading file settings -> log filename len");
+
         fread(&settings->fileSettings.logFileNameLen, sizeof(uint8_t), 1, settingsFile);
+
+        if(ferror(settingsFile)){
+            // read error occured
+            log_stderr(0, 3, "Read error occured");
+            return false;
+        }else if(feof(settingsFile)){
+            // eof too early error
+            log_stderr(0, 3, "Reached EOF too early");
+            return false;
+        }else{
+            sprintf(logMsg, "Read log filename length - %d", settings->fileSettings.logFileNameLen);
+            log_stderr(0, 0, logMsg);
+        }
+
         log_stderr(0, 0, "Reading file settings -> log filename");
+
         fread(settings->fileSettings.logFileName, sizeof(char), settings->fileSettings.logFileNameLen + 1, settingsFile);
+
+        if(ferror(settingsFile)){
+            // read error occured
+            log_stderr(0, 3, "Read error occured");
+            return false;
+        }else if(feof(settingsFile)){
+            // eof too early error
+            log_stderr(0, 3, "Reached EOF too early");
+            return false;
+        }else{
+            sprintf(logMsg, "Read log filename - %s", settings->fileSettings.logFileName);
+            log_stderr(0, 0, logMsg);
+        }
 
         // settings
         log_stderr(0, 0, "Reading file settings -> settings filename len");
+
         fread(&settings->fileSettings.settingsFileNameLen, sizeof(uint8_t), 1, settingsFile);
+
+        if(ferror(settingsFile)){
+            // read error occured
+            log_stderr(0, 3, "Read error occured");
+            return false;
+        }else if(feof(settingsFile)){
+            // eof too early error
+            log_stderr(0, 3, "Reached EOF too early");
+            return false;
+        }else{
+            sprintf(logMsg, "Read settings filename length - %d", settings->fileSettings.settingsFileNameLen);
+            log_stderr(0, 0, logMsg);
+        }
+
         log_stderr(0, 0, "Reading file settings -> settings filename");
+
         fread(settings->fileSettings.settingsFileName, sizeof(char), settings->fileSettings.settingsFileNameLen + 1, settingsFile);
+
+        if(ferror(settingsFile)){
+            // read error occured
+            log_stderr(0, 3, "Read error occured");
+            return false;
+        }else if(feof(settingsFile)){
+            // eof too early error
+            log_stderr(0, 3, "Reached EOF too early");
+            return false;
+        }else{
+            sprintf(logMsg, "Read settings filename - %s", settings->fileSettings.settingsFileName);
+            log_stderr(0, 0, logMsg);
+        }
 
         //stats
         log_stderr(0, 0, "Reading file settings -> stats filename len");
+
+        if(ferror(settingsFile)){
+            // read error occured
+            log_stderr(0, 3, "Read error occured");
+            return false;
+        }else if(feof(settingsFile)){
+            // eof too early error
+            log_stderr(0, 3, "Reached EOF too early");
+            return false;
+        }else{
+            sprintf(logMsg, "Read stats filename length - %d", settings->fileSettings.statsFileNameLen);
+            log_stderr(0, 0, logMsg);
+        }
+
         fread(&settings->fileSettings.statsFileNameLen, sizeof(uint8_t), 1, settingsFile);
+
         log_stderr(0, 0, "Reading file settings -> stats filename");
+
         fread(settings->fileSettings.statsFileName, sizeof(char), settings->fileSettings.statsFileNameLen + 1, settingsFile);
 
+        if(ferror(settingsFile)){
+            // read error occured
+            log_stderr(0, 3, "Read error occured");
+            return false;
+        }else if(feof(settingsFile)){
+            // eof too early error
+            log_stderr(0, 3, "Reached EOF too early");
+            return false;
+        }else{
+            sprintf(logMsg, "Read stats filename - %s", settings->fileSettings.statsFileName);
+            log_stderr(0, 0, logMsg);
+        }
+
     }else{
-        log_stderr(0, 0, "Failed opening settings.bin file");
+        sprintf(logMsg, "Failed opening %s", fileName);
+        log_stderr(0, 3, logMsg);
         printf("Failed to create or open settings file!\n");
         return false;
     }
 
+    // fclose + check if fails
     if(fclose(settingsFile) == 0){
-        log_stderr(0, 0, "Successfully closed settings.bin");
+        sprintf(logMsg, "Successfully closed %s", fileName);
+        log_stderr(0, 0, logMsg);
     }else{
-        log_stderr(0, 3, "Failed to close settings.bin");
+        sprintf(logMsg, "Successfully closed %s", fileName);
+        log_stderr(0, 3, logMsg);
     }
 
     return true;
@@ -265,6 +464,7 @@ bool read_settings(char* fileName, struct settings_t* settings){
 bool write_settings(char* fileName, struct settings_t* settings){
 
     log_stderr(0, 1, "Writing settings");
+    char logMsg[80];
 
     FILE* settingsFile;
 
@@ -304,7 +504,7 @@ bool write_settings(char* fileName, struct settings_t* settings){
         fwrite(settings->fileSettings.settingsFileName, sizeof(char), settings->fileSettings.settingsFileNameLen + 1, settingsFile);
 
         //stats
-        log_stderr(0, 0, "Writing settings settings");
+        log_stderr(0, 0, "Writing stats file settings");
         fwrite(&settings->fileSettings.statsFileNameLen, sizeof(uint8_t), 1, settingsFile);
         fwrite(settings->fileSettings.statsFileName, sizeof(char), settings->fileSettings.statsFileNameLen + 1, settingsFile);
 
@@ -315,20 +515,23 @@ bool write_settings(char* fileName, struct settings_t* settings){
     }
 
     if(fclose(settingsFile) == 0){
-        log_stderr(0, 0, "Successfully closed settings file");
+        sprintf(logMsg, "Successfully closed %s", fileName);
+        log_stderr(0, 0, logMsg);
     }else{
-        log_stderr(0, 3, "Failed to close settings file");
+        sprintf(logMsg, "Failed to close %s", fileName);
+        log_stderr(0, 3, logMsg);
+        return false;
     }
 
     return true;
 }
 
-struct settings_t* init_settings(char* fileName, struct dict_t* colourDict){
+struct settings_t*  init_settings(char* fileName, struct dict_t* colourDict){
 
-    struct settings_t* settings;
     // add correct path to filename
     char editedFileName[strlen(fileName) + strlen("../res/bin/")];
     sprintf(editedFileName, "../res/bin/%s", fileName);
+    struct settings_t* settings;
 
     // if file exists
     if(access(editedFileName, F_OK) == 0){ // test file existance -> access - if it can be accessed; F_OK if it exists
@@ -359,6 +562,7 @@ struct settings_t* init_settings(char* fileName, struct dict_t* colourDict){
 
         if(!write_settings(editedFileName, settings)){
             printf("Failed to create or open settings file!\n");
+            return NULL;
         }
     }
 
@@ -466,7 +670,7 @@ struct settings_t* define_settings(struct dict_t* colourDict){
     strcpy(fileSettings.settingsFileName, "settings.bin\0");
     fileSettings.settingsFileNameLen = strlen(fileSettings.settingsFileName);
 
-    strcpy(fileSettings.statsFileName, "../../../../res/bin/stats.bin\0");
+    strcpy(fileSettings.statsFileName, "stats.bin\0");
     fileSettings.statsFileNameLen = strlen(fileSettings.statsFileName);
 
     // memcpy because gameSettings has const vars and cant assign it
@@ -491,7 +695,7 @@ void display_settings_menu(struct settings_t* settings, struct dict_t* colourDic
     sprintf(settingsFileName, "../res/bin/%s", settings->fileSettings.settingsFileName);
 
     // colour vars
-    log_stderr(0, 0, "Getting colours from colour dict");
+    log_stderr(0, 0, "Fetching colours from colour dict");
     const char *flash, *white, *def, *yellow, *heavy;
     flash = binary_search_dict('F', colourDict);
     white = binary_search_dict('W', colourDict);
@@ -505,7 +709,7 @@ void display_settings_menu(struct settings_t* settings, struct dict_t* colourDic
     bool changedSettings = false;
 
     while(1){
-
+        log_stderr(0, 0, "Printing main menu");
         system("clear");
         printf("%s%s CONNECT FOUR %s", heavy, yellow, def);
         printf("%s (settings) %s\n\n", yellow, def);
@@ -541,11 +745,13 @@ void display_settings_menu(struct settings_t* settings, struct dict_t* colourDic
         if(settingsNO == 1){
             // display game settings menu
             if(display_game_settings_menu(settings, colourDict)){
+                log_stderr(0, 0, "Acknowledging changes made in game settings menu");
                 // if changes were made aknowledge it
                 changedSettings = true;
             };
         }else if(settingsNO == 2){
             if(display_player_settings_menu(settings, colourDict)){
+                log_stderr(0, 0, "Acknowledging changes made in player settings menu");
                 changedSettings = true;
             }
         }else{
@@ -582,7 +788,7 @@ bool display_game_settings_menu(struct settings_t* settings, struct dict_t* colo
     sprintf(errmsg2, "%s%s NEW VALUE: %s", heavy, white, def);
 
     // arr to hold all game settings info
-    log_stderr(0, 0, "Creating settings arr, displaying detailed information");
+    log_stderr(0, 0, "Creating settings array (with detailed information)");
     struct displaySettings_t settingsArr[] =
     {
         {
@@ -665,6 +871,7 @@ bool display_game_settings_menu(struct settings_t* settings, struct dict_t* colo
 
         // print all setting name-value from settingsArr
         log_stderr(0, 0, "Printing game settings");
+
         for(i = 0; strcmp(settingsArr[i].name, "BACK") != 0; i++){
             // show win highligh colour
             if(strcmp(settingsArr[i].name, "win_highlight_colour") == 0){
@@ -682,16 +889,21 @@ bool display_game_settings_menu(struct settings_t* settings, struct dict_t* colo
         // get input and check if esc key was pressed
         exitCheck = !get_short(&settingsNO, 1, i+1, errmsg1);
 
-        system("clear");
+
 
         // exit condition
         if(settingsNO == i+1 || exitCheck == true){
+            log_stderr(0, 1, "Exiting game settings");
             break;
         }
 
         // print additional info about settings
-        sprintf(logMsg, "Print additional info about %s", settingsArr[settingsNO-1].name);
+        sprintf(logMsg, "Displaying game settings - %s menu", settingsArr[settingsNO-1].name);
+        log_stderr(0, 1, logMsg);
+        sprintf(logMsg, "Printing additional info about %s", settingsArr[settingsNO-1].name);
         log_stderr(0, 0, logMsg);
+
+        system("clear");
 
         printf("%s%s CONNECT FOUR %s", heavy, yellow, def);
         printf("%s (game-settings-%s) %s\n\n", yellow, settingsArr[settingsNO-1].name, def);
@@ -715,12 +927,14 @@ bool display_game_settings_menu(struct settings_t* settings, struct dict_t* colo
         }
 
 
-
         // if new value is assigned change settingsChange to true
 
         if(settingsArr[settingsNO - 1].maxValue == 1 && settingsArr[settingsNO - 1].minValue == 0){
-            log_stderr(0, 0, "Assign bool value");
+
+            log_stderr(0, 0, "Assigning bool value");
             if(get_bool(settingsArr[settingsNO-1].value, errmsg2)){
+                sprintf(logMsg, "Value changed to %hd", *(bool*)settingsArr[settingsNO-1].value);
+                log_stderr(0, 1, logMsg);
                 settingsChange = true;
 
                 // change debug mode instantly (also change game settings debug mode to new debug mode)
@@ -729,12 +943,14 @@ bool display_game_settings_menu(struct settings_t* settings, struct dict_t* colo
                 }
             }
         }else{
-            log_stderr(0, 0, "Assign short value");
+            log_stderr(0, 0, "Assigning short value");
 
             if(get_short(settingsArr[settingsNO-1].value, settingsArr[settingsNO-1].minValue, settingsArr[settingsNO-1].maxValue, errmsg2)){
+                sprintf(logMsg, "Value changed to %hd", *(short*)settingsArr[settingsNO-1].value);
+                log_stderr(0, 1, logMsg);
                 settingsChange = true;
 
-                // special case for char val setting
+                // special case for char val setting -> change value to value from colour dict
                 if(strcmp(settingsArr[settingsNO-1].name, "win_highlight_colour") == 0){
                     *(char*)settingsArr[settingsNO-1].value = colourDict->nodeArr[*(short*)settingsArr[settingsNO-1].value-1].key;
 
@@ -742,10 +958,13 @@ bool display_game_settings_menu(struct settings_t* settings, struct dict_t* colo
                 }else if(strcmp(settingsArr[settingsNO-1].name, "player_amount") == 0){
 
                     // check if player amount > playerArrSize
-                    if(*(int*)settingsArr[settingsNO-1].value > settings->playerSettings->playerArrSize){
-                        printf("player arr size - %hd", settings->playerSettings->playerArrSize);
+                    if(*(short*)settingsArr[settingsNO-1].value > settings->playerSettings->playerArrSize){
+
+                        log_stderr(0, 2, "Can't change player amount - not enough players defined");
+
+                        printf("player array size - %hd", settings->playerSettings->playerArrSize);
                         printf("\n ERROR - Not enough players defined. Add more via the player settings menu. (value set to 2)");
-                        *(int*)settingsArr[settingsNO-1].value = 2;
+                        *(short*)settingsArr[settingsNO-1].value = 2;
                         getchar(); // wait for user input
                     }
                 }
@@ -765,6 +984,7 @@ bool display_player_settings_menu(struct settings_t* settings, struct dict_t* co
     bool exitCheck, exitCheck2, exitCheck3, settingsChange;
     exitCheck = exitCheck2 = exitCheck3 = settingsChange = false;
 
+    char logMsg[50];
     log_stderr(0, 0, "Getting colours from colour dict");
     const char *flash, *white, *def, *yellow, *heavy;
     flash = binary_search_dict('F', colourDict);
@@ -802,12 +1022,14 @@ bool display_player_settings_menu(struct settings_t* settings, struct dict_t* co
 
         // exit condition
         if(settingsNO == i+2 || exitCheck == true){
+            log_stderr(0, 1, "Exiting player settings");
             break;
         }else if(settingsNO == i+1){ // add player
-            log_stderr(0, 0, "Adding new player");
+            sprintf(logMsg, "Adding player %d", settings->playerSettings->playerArrSize+1);
+            log_stderr(0, 0, logMsg);
 
             if(settings->playerSettings->playerArrSize >= 9){
-                log_stderr(0, 2, "Max amount of players already reacher");
+                log_stderr(0, 2, "Max amount of players already reached");
                 printf("ERROR - already reached max player amount");
                 getchar();
             }else{
@@ -817,8 +1039,11 @@ bool display_player_settings_menu(struct settings_t* settings, struct dict_t* co
 
         }else{
             // choose which player setting u want to change (colour/symbol)
+            sprintf(logMsg, "Displaying menu for player %d", settingsNO);
+            log_stderr(0, 1, logMsg);
             while(1){
 
+                log_stderr(0, 0, "Printing menu info");
                 system("clear");
 
                 printf("%s%s CONNECT FOUR %s", heavy, yellow, def);
@@ -838,6 +1063,8 @@ bool display_player_settings_menu(struct settings_t* settings, struct dict_t* co
                 }else{
                     if(settingsNO2 == 1){
                         // change colour
+                        log_stderr(0, 1, "Displaying player colour menu");
+                        log_stderr(0, 0, "Printing player colour info");
                         system("clear");
 
                         printf("%s%s CONNECT FOUR %s", heavy, yellow, def);
@@ -850,10 +1077,12 @@ bool display_player_settings_menu(struct settings_t* settings, struct dict_t* co
 
                         if(exitCheck3 == true){
                             // exit to player_n-settings
+                            sprintf(logMsg, "Exiting to menu for player %d", settingsNO);
+                            log_stderr(0, 1, logMsg);
                             continue;
                         }else{
 
-
+                            log_stderr(0, 0, "Adding colour info to player");
 
                             settings->playerSettings->playerSettings[settingsNO - 1]->colour = colourDict->nodeArr[settingsNO3 - 1].key;
                             strcpy(settings->playerSettings->playerSettings[settingsNO - 1]->colourCode, colourDict->nodeArr[settingsNO3 - 1].value);
@@ -862,11 +1091,13 @@ bool display_player_settings_menu(struct settings_t* settings, struct dict_t* co
                             settingsChange = true;
 
                             // exit to player-settings
+                            log_stderr(0, 1, "Exiting to player-settings");
                             break;
                         }
 
                     }else{ // == 2
-
+                        log_stderr(0, 1, "Displaying player symbol menu");
+                        log_stderr(0, 0, "Printing player symbol info");
                         system("clear");
                         printf("%s%s CONNECT FOUR %s", heavy, yellow, def);
                         printf("%s (player_%hd-settings-symbol_letter) %s\n\n", yellow, settingsNO, def);
@@ -874,6 +1105,8 @@ bool display_player_settings_menu(struct settings_t* settings, struct dict_t* co
                         printf("\n\n choose symbol: ");
                         settings->playerSettings->playerSettings[settingsNO-1]->symbol = getchar();
 
+                        sprintf(logMsg, "Changed player %hd symbol to %c[%hd]", settingsNO, settings->playerSettings->playerSettings[settingsNO-1]->symbol, settings->playerSettings->playerSettings[settingsNO-1]->symbol);
+                        log_stderr(0, 1, logMsg);
                         // gets only the first character of msg -> eat the rest if any
                         clear_stdin();
 
@@ -881,6 +1114,7 @@ bool display_player_settings_menu(struct settings_t* settings, struct dict_t* co
                         settingsChange = true;
 
                         // exit to player-settings
+                        log_stderr(0, 1, "Exiting to player-settings");
                         break;
                     }
                 }
