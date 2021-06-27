@@ -1022,7 +1022,7 @@ bool display_player_settings_menu(struct settings_t* settings, struct dict_t* co
     exitCheck = exitCheck2 = exitCheck3 = settingsChange = false;
 
     char logMsg[50];
-    log_stderr(0, 0, "Getting colours from colour dict");
+    log_stderr(0, 0, "Fetching colours from colour dict");
     const char *flash, *white, *def, *yellow, *heavy;
     flash = binary_search_dict('F', colourDict);
     white = binary_search_dict('W', colourDict);
@@ -1164,12 +1164,16 @@ bool display_player_settings_menu(struct settings_t* settings, struct dict_t* co
 
 bool display_file_settings_menu(struct settings_t* settings, struct dict_t* colourDict){
 
+    log_stderr(0, 1, "Displaying file settings menu");
+
     bool exitCheck;
     bool settingsChange = false;
     short settingsNO;
     char* errmsg = "\n Invalid input! Try again\n go to";
+    char logMsg[55];
 
     // fetch colours
+    log_stderr(0, 0, "Fetching colours from colour dict");
     const char *flash, *white, *def, *yellow, *heavy;
     flash = binary_search_dict('F', colourDict);
     white = binary_search_dict('W', colourDict);
@@ -1178,6 +1182,7 @@ bool display_file_settings_menu(struct settings_t* settings, struct dict_t* colo
     yellow = binary_search_dict('Y', colourDict);
 
     while(1){
+        log_stderr(0, 0, "Printing fuke settings menu");
         system("clear");
 
         printf("%s%s CONNECT FOUR %s", heavy, yellow, def);
@@ -1189,23 +1194,27 @@ bool display_file_settings_menu(struct settings_t* settings, struct dict_t* colo
         exitCheck = !get_short(&settingsNO, 1, colourDict->currentSize, errmsg);
 
         if(settingsNO == 2 || exitCheck == true){
+            log_stderr(0, 1, "Exiting to main-menu");
             break;
         }
 
         if(settingsNO == 1){
-
+            log_stderr(0, 1, "Displaying file settings-log menu");
             system("clear");
 
             printf("%s%s CONNECT FOUR %s", heavy, yellow, def);
             printf("%s (file-settings-log) %s\n\n", yellow, def);
 
-            printf("\n %s%s NEW FILENAME: %s", heavy, white, def);
+            printf("\n%s%sNEW FILENAME: %s", heavy, white, def);
 
             if(get_validated_str(settings->fileSettings.logFileName, 1, 31-5, errmsg)){
                 settings->fileSettings.logFileNameLen = strlen(settings->fileSettings.logFileName);
                 settingsChange = true;
+                sprintf(logMsg, "Changed value to %s", settings->fileSettings.logFileName);
+                log_stderr(0, 1, logMsg);
                 continue;
             }else{
+                log_stderr(0, 0, "Value unchanged");
                 continue; // loop again
             }
         }

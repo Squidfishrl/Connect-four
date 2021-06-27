@@ -72,7 +72,7 @@ bool get_validated_str(char* var, short minSize, short maxSize, char* errmsg){
                 char logMsg[20];
                 sprintf(logMsg, "Invalid char '%c'", tempVar[i]);
                 log_stderr(0, 2, logMsg);
-                printf("%s (Size: %d-%d)", errmsg, minSize, maxSize);
+                printf("%s (Size: %d-%d): ", errmsg, minSize, maxSize);
                 valid = false;
                 break;
             }
