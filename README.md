@@ -13,11 +13,11 @@ Currently it offers:
 - customizable colouring and symbols
 - changable win conditions
 - game logging
+- error logging
 
 With features to come:
 - bot opponents
 - stat tracking
-- error logging
 
 ## Installation and Usage
 ``` console
@@ -40,11 +40,11 @@ $ ./run/launchLinux.sh
 Required for automated launch. Game might not work with different compilers / compiler settings.
 
 #### - console using Bash shell
-Required for automated launch.
+Required for automated launch and error logging.
 
 ## How we made it
 [Connect Four](https://github.com/Squidfishrl/Connect-four) was developed as a [TUES](https://www.elsys-bg.org/) school project for 10th grade.
 
 Work was split between 2 people:
-- [Ivaylo Genchev / Squidfishrl](https://github.com/Squidfishrl) - Created game board, implemented settings and made the main menu
+- [Ivaylo Genchev / Squidfishrl](https://github.com/Squidfishrl) - Created game board, implemented settings, made the main menu, added error logging
 - [Daniel Paunov / McAwesome123](https://github.com/McAwesome123) - Created game logic
