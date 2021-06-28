@@ -51,6 +51,7 @@ void free_matrix(struct matrix_t* matrix);
 struct matrix_t* create_matrix(int rows, int columns);
 struct matrix_t* init_matrix(int rows, int columns); // help function for create_matrix
 struct node_t* init_node(int row, int column, struct node_t* up, struct node_t* down, struct node_t* left, struct node_t* right);
+struct matrix_t* clone_matrix(struct matrix_t* matrix);
 
 /* -------------------------------------------------------------------------- */
 
@@ -256,6 +257,20 @@ struct node_t* init_node(int row, int column, struct node_t* up, struct node_t* 
     initNode->winHiglight = false;
 
     return initNode;
+}
+
+struct matrix_t* clone_matrix(struct matrix_t* matrix)
+{
+	struct matrix_t* new_matrix = create_matrix(matrix->rows, matrix->columns);
+	for (int y = 0; y < matrix->rows; y++)
+	{
+		for (int x = 0; x < matrix->columns; x++)
+		{
+			get_node_by_cords(new_matrix, y, x)->type = get_node_by_cords(matrix, y, x)->type;
+		}
+	}
+
+	return new_matrix;
 }
 
 /* -------------------------------------------------------------------------- */

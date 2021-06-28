@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys\timeb.h>
+#include <time.h>
 
 #include "../board/board.h"
 #include "../stats/stats.h"
@@ -17,7 +17,11 @@ void game_loop(struct settings_t* settings, struct stats_t* stats, struct dict_t
 short add_piece(struct matrix_t* matrix, short player, short position);
 short check_win(struct matrix_t* matrix, short player, short position, short connectAmount);
 void log_moves(struct matrix_t* matrix, short moves[], short max_moves, char *log_name, struct playerSettings_t* settings);
-short bot_move(struct matrix_t* matrix, short depth);
+short bot_move(struct matrix_t* matrix, short player, short current_move, short max_moves, struct settings_t* settings, struct dict_t* colourDict);
+bool bot_can_play(struct matrix_t* matrix, short position);
+bool bot_winning_move(struct matrix_t* matrix, short player, short position, struct settings_t* settings);
+int negamax(struct matrix_t* matrix, short player, short current_move, short max_moves, struct settings_t* settings, int alpha, int beta);
+
 
 /* -------------------------------------------------------------------------- */
 
@@ -32,7 +36,7 @@ void game_loop(struct settings_t* settings, struct stats_t* stats, struct dict_t
     sprintf(log_name, "../res/%s", settings->fileSettings.logFileName);
     // strcat(log_name, settings->fileSettings.logFileName);
     char stats_name[settings->fileSettings.statsFileNameLen + strlen("../res/bin/")];
-    strcpy(stats_name, strcat("../res/bin/", settings->fileSettings.statsFileName));
+    sprintf(stats_name, "../res/bin/%s", settings->fileSettings.statsFileName);
 
 	short player = 1;
 	short position = 0;
@@ -48,8 +52,8 @@ void game_loop(struct settings_t* settings, struct stats_t* stats, struct dict_t
 		stats->player[x].games++;
 	}
 
-    struct timeb start, stop;
-    ftime(&start);
+    clock_t start, stop;
+    long long total_duration = 0;
 
 	// Get player input - Done
 	// Verify input - Done
@@ -57,6 +61,8 @@ void game_loop(struct settings_t* settings, struct stats_t* stats, struct dict_t
 	// Log move - Done
 	// Display matrix - Done
 	// Check win - Done
+
+	start = clock();
 
     print_matrix(matrix, settings, colourDict);
 
@@ -67,12 +73,24 @@ void game_loop(struct settings_t* settings, struct stats_t* stats, struct dict_t
             printf("%d/%d \n", i, max_moves);
 			printf("Player %hd: ", player);
 
-			while(get_short_from_char(&position, 1, matrix->columns, "Invalid position!\nChoose column: ") != true){
-				// msg repeating because if get_short exits from esc it won't say any msg
-				printf("Invalid position!\nChoose column: ");
-			};
+			if (player == 2)
+			{
+				position = bot_move(matrix, player, i, max_moves, settings, colourDict);
+				//Sleep(500);
+				printf("%d", position+1);
+				//Sleep(1000);
+				printf("\n");
+			}
+			else
+			{
 
-			position--;
+				while(get_short_from_char(&position, 1, matrix->columns, "Invalid position!\nChoose column: ") != true){
+					// msg repeating because if get_short exits from esc it won't say any msg
+					printf("Invalid position!\nChoose column: ");
+				};
+
+				position--;
+			}
 
 			switch (add_piece(matrix, player, position))
 			{
@@ -102,6 +120,15 @@ void game_loop(struct settings_t* settings, struct stats_t* stats, struct dict_t
 
         print_matrix(matrix, settings, colourDict);
 
+        stop = clock();
+
+		long long duration = 1000.0 * (stop - start) / CLOCKS_PER_SEC - total_duration;
+        stats->total_playtime += duration;
+        for (int x = 0; x < settings->gameSettings.playerAmount; stats->player[x++].playtime += duration);
+        total_duration += duration;
+
+		write_stats_file(stats, stats_name);
+
         // win condition
         if(check_win(matrix, player, position, settings->gameSettings.connectAmount))
 		{
@@ -122,16 +149,12 @@ void game_loop(struct settings_t* settings, struct stats_t* stats, struct dict_t
         }
 	}
 
-	ftime(&stop);
-	long long playtime = (int)(1000.0 * (stop.time - start.time) + (stop.millitm - stop.millitm));
-	stats->total_playtime += playtime;
-	for (int x = 0; x < settings->gameSettings.playerAmount; stats->player[x++].playtime += playtime);
-
 	// log_moves(matrix, moves, max_moves, log_name);
     log_moves(matrix, moves, max_moves, log_name, settings->playerSettings);
     write_stats_file(stats, stats_name);
     printf("Press any key to continue: ");
     getchar();
+    free_matrix(matrix);
 	return;
 }
 
@@ -270,9 +293,123 @@ void log_moves(struct matrix_t* matrix, short moves[], short max_moves, char* lo
 	return;
 }
 
-short bot_move(struct matrix_t* matrix, short depth)
+short bot_move(struct matrix_t* matrix, short player, short current_move, short max_moves, struct settings_t* settings, struct dict_t* colourDict)
 {
-	return 0;
+	int scores[matrix->columns];
+
+	for (int x = 0; x < matrix->columns; x++)
+	{
+		if (bot_can_play(matrix, x))
+		{
+			printf("%d ", x);
+			struct matrix_t* bot_matrix = clone_matrix(matrix);
+			add_piece(bot_matrix, player, x);
+			scores[x] = -negamax(bot_matrix, player, current_move + 1, max_moves, settings, -10000, 10000);
+			free_matrix(bot_matrix);
+		}
+		else
+		{
+			scores[x] = -matrix->rows * matrix->columns - 1;
+		}
+	}
+
+	int highest_score_x = 0;
+	for (int x = 1, highest_score = scores[0]; x < matrix->columns; x++)
+	{
+		if (highest_score < scores[x])
+		{
+			highest_score = scores[x];
+			highest_score_x = x;
+		}
+	}
+
+	printf("\nScores: ");
+	for (int x = 0; x < matrix->columns; x++)
+	{
+		printf("%d ", scores[x]);
+	}
+  getchar();
+	printf("\n");
+
+	return highest_score_x;
+}
+
+// Can the position be played
+bool bot_can_play(struct matrix_t* matrix, short position)
+{
+	if (position < 0 || position >= matrix->columns)
+	{
+		return false;
+	}
+
+	return get_node_by_cords(matrix, matrix->rows-1, position)->type == 0;
+}
+
+// Would putting a piece in that position be a win
+bool bot_winning_move(struct matrix_t* matrix, short player, short position, struct settings_t* settings)
+{
+	struct node_t* node = get_node_by_cords(matrix, 0, position);
+
+	for(; node != NULL && node->type != 0; node = node->up);
+
+	node->type = player;
+
+	bool is_winning = check_win(matrix, player, position, settings->gameSettings.connectAmount);
+
+	node->type = 0;
+
+	return is_winning;
+}
+
+int negamax(struct matrix_t* matrix, short player, short current_move, short max_moves, struct settings_t* settings, int alpha, int beta)
+{
+	if (current_move >= max_moves)
+	{
+		return 0;
+	}
+
+	for (int x = 0; x < matrix->columns; x++)
+	{
+		if (bot_can_play(matrix, x) && bot_winning_move(matrix, player, x, settings))
+		{
+			return (matrix->rows * matrix->columns + 1 - current_move) / 2;
+		}
+	}
+
+	int max_score = (matrix->rows * matrix->columns - 1 - current_move) / 2;
+	if (beta > max_score)
+	{
+		beta = max_score;
+		if (alpha >= beta)
+		{
+			return beta;
+		}
+	}
+
+	for (int x = 0; x < matrix->columns; x++)
+	{
+		if (bot_can_play(matrix, x))
+		{
+			struct matrix_t* next_matrix = clone_matrix(matrix);
+			short next_player = 1 + (player >= settings->gameSettings.playerAmount ? 0 : player);
+
+			add_piece(next_matrix, next_player, x);
+			int score = -negamax(next_matrix, next_player, current_move + 1, max_moves, settings, -alpha, -beta);
+
+			free_matrix(next_matrix);
+
+			if (score >= beta)
+			{
+				return score;
+			}
+			if (score > alpha)
+			{
+				alpha = score;
+			}
+		}
+	}
+
+	return alpha;
 }
 
 /* -------------------------------------------------------------------------- */
