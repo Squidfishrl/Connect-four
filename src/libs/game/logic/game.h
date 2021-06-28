@@ -65,7 +65,6 @@ void game_loop(struct settings_t* settings, struct stats_t* stats, struct dict_t
     // clock_t start, stop;
     time_t start, stop;
     start = time(NULL);
-    long long total_duration = 0;
 
 	// Get player input - Done
 	// Verify input - Done
@@ -136,13 +135,6 @@ void game_loop(struct settings_t* settings, struct stats_t* stats, struct dict_t
 
     print_matrix(matrix, settings, colourDict);
 
-    stop = time(NULL);
-
-		long long duration = stop - start - total_duration;
-    stats->total_playtime += duration;
-    for (int x = 0; x < settings->gameSettings.playerAmount; stats->player[x++].playtime += duration);
-    total_duration += duration;
-
         // win condition
     if(check_win(matrix, player, position, settings->gameSettings.connectAmount)){
         log_stderr(0, 1, "Game over - a player won");
@@ -166,13 +158,19 @@ void game_loop(struct settings_t* settings, struct stats_t* stats, struct dict_t
     }
   }
 
+  stop = time(NULL);
+
+	long long duration = stop - start;
+  stats->total_playtime += duration;
+  for (int x = 0; x < settings->gameSettings.playerAmount; stats->player[x++].playtime += duration);
+
 	// log_moves(matrix, moves, max_moves, log_name);
-    printf("Press any key to continue: ");
-    getchar();
-    // log and free after getchar so that logging isnt shown on screen
-    log_moves(matrix, moves, max_moves, log_name, settings->playerSettings);
-    write_stats_file(stats, stats_name);
-    free_matrix(matrix);
+  printf("Press any key to continue: ");
+  getchar();
+  // log and free after getchar so that logging isnt shown on screen
+  log_moves(matrix, moves, max_moves, log_name, settings->playerSettings);
+  write_stats_file(stats, stats_name);
+  free_matrix(matrix);
 	return;
 }
 
