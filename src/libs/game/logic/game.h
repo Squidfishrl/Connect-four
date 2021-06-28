@@ -35,12 +35,12 @@ void game_loop(struct settings_t* settings, struct stats_t* stats, struct dict_t
     log_stderr(0, 1, "Starting game loop");
 
     struct matrix_t* matrix = create_matrix(settings->gameSettings.boardRows, settings->gameSettings.boardColumns);
-    if(matrix == NULL){
-        log_stderr(0, 3, "Failed creating matrix");
-        return;
-    }else{
-        log_stderr(0, 0, "Successfully created matrix");
-    }
+        if(matrix == NULL){
+            log_stderr(0, 3, "Failed creating matrix");
+            return;
+        }else{
+            log_stderr(0, 0, "Successfully created matrix");
+        }
 
     char log_name[settings->fileSettings.logFileNameLen + strlen("../res/")];
     sprintf(log_name, "../res/%s", settings->fileSettings.logFileName);
@@ -48,19 +48,19 @@ void game_loop(struct settings_t* settings, struct stats_t* stats, struct dict_t
     char stats_name[settings->fileSettings.statsFileNameLen + strlen("../res/bin/")];
     sprintf(stats_name, "../res/bin/%s", settings->fileSettings.statsFileName);
 
-	short player = 1;
-	short position = 0;
+    short player = 1;
+    short position = 0;
 
-	const short max_moves = matrix->rows * matrix->columns;
+    const short max_moves = matrix->rows * matrix->columns;
 
-	short moves[max_moves];
+    short moves[max_moves];
     memset(moves, 0, max_moves*sizeof(short));
 
     stats->total_games++;
-    for (int x = 0; x < settings->gameSettings.playerAmount; x++)
-	{
-		stats->player[x].games++;
-	}
+
+    for (int x = 0; x < settings->gameSettings.playerAmount; x++){
+		    stats->player[x].games++;
+	  }
 
     clock_t start, stop;
     long long total_duration = 0;
@@ -71,103 +71,98 @@ void game_loop(struct settings_t* settings, struct stats_t* stats, struct dict_t
 	// Log move - Done
 	// Display matrix - Done
 	// Check win - Done
-
-	start = clock();
+    start = clock();
 
     print_matrix(matrix, settings, colourDict);
 
 	for (short i = 0; 1; player = 1 + (player >= settings->gameSettings.playerAmount ? 0 : player), i++)
 	{
-        while (1)
-		{
+        while (1){
             printf("%d/%d \n", i, max_moves);
-			printf("Player %hd: ", player);
+			      printf("Player %hd: ", player);
 
-         if(settings->gameSettings.againstBot == false){
-            log_stderr(0, 0, "Ask player for column pick");
-                while(get_short_from_char(&position, 1, matrix->columns, "Invalid position!\nchoose column: ") != true){
-                // msg repeating because if get_short exits from esc it won't say any msg
-                    printf("Invalid position!\nchoose column: ");
-                };
-         }else{
-              if(player > 1){
+            if(settings->gameSettings.againstBot == 0){
+                log_stderr(0, 0, "Ask player for column pick");
+                    while(get_short_from_char(&position, 1, matrix->columns, "Invalid position!\nchoose column: ") != true){
+                    // msg repeating because if get_short exits from esc it won't say any msg
+                        printf("Invalid position!\nchoose column: ");
+                    };
+            }else{
+
+              if(player == 1){
+                  log_stderr(0, 0, "Ask player for column pick");
+                      while(get_short_from_char(&position, 1, matrix->columns, "Invalid position!\nchoose column: ") != true){
+                      // msg repeating because if get_short exits from esc it won't say any msg
+                          printf("Invalid position!\nchoose column: ");
+                      };
+              }else{
                   position = bot_move(matrix, player, i, max_moves, settings, colourDict);
               }
-         }
+            }
 
+            position--;
 
-				while(get_short_from_char(&position, 1, matrix->columns, "Invalid position!\nChoose column: ") != true){
-					// msg repeating because if get_short exits from esc it won't say any msg
-					printf("Invalid position!\nChoose column: ");
-				};
+  			switch (add_piece(matrix, player, position))
+  			{
+  				case 0:		// Successful move
+  					   break;
 
-				position--;
-			}
+  				case 1:		// Position exceeds board width
+                      // shouldnt be possible with input validation added
+  					printf("Position out of bounds!\n");
+            log_stderr(0, 2, "Position out of bounds");
+  					continue;
 
-			switch (add_piece(matrix, player, position))
-			{
-				case 0:		// Successful move
-					break;
+  				case 2:		// Position exceeds board height
 
-				case 1:		// Position exceeds board width
-                    // shouldnt be possible with input validation added
-					printf("Position out of bounds!\n");
-          log_stderr(0, 2, "Position out of bounds");
-					continue;
+  					printf("Position has too many pieces!\n");
+            log_stderr(0, 2, " Column full - can't add piece");
+  					continue;
 
-				case 2:		// Position exceeds board height
-          
-					printf("Position has too many pieces!\n");
-          log_stderr(0, 2, " Column full - can't add piece");
-					continue;
+  				default:	// Position is invalid for some other reason (unused?)
+  					printf("Position invalid!\n");
+            log_stderr(0, 2, "Invalid position for unknown reasons");
+  					continue;
+  			}
 
-				default:	// Position is invalid for some other reason (unused?)
-					printf("Position invalid!\n");
-          log_stderr(0, 2, "Invalid position for unknown reasons");
-					continue;
-			}
-
-			break;
-		}
+  			break;
+  		}
 
 		moves[i] = position+1;
 		stats->total_moves++;
 		stats->player[player-1].moves++;
 
-        print_matrix(matrix, settings, colourDict);
+    print_matrix(matrix, settings, colourDict);
 
-        stop = clock();
+    stop = clock();
 
 		long long duration = 1000.0 * (stop - start) / CLOCKS_PER_SEC - total_duration;
         stats->total_playtime += duration;
         for (int x = 0; x < settings->gameSettings.playerAmount; stats->player[x++].playtime += duration);
         total_duration += duration;
 
-		write_stats_file(stats, stats_name);
-
         // win condition
-    if(check_win(matrix, player, position, settings->gameSettings.connectAmount))
-		{
-      log_stderr(0, 1, "Game over - a player won");
-			stats->total_wl++;
-			stats->player[player-1].wins++;
-			stats->player[player-1].losses--;
-			for (int x = 0; x < settings->gameSettings.playerAmount; stats->player[x++].losses++);
+    if(check_win(matrix, player, position, settings->gameSettings.connectAmount)){
+        log_stderr(0, 1, "Game over - a player won");
+  			stats->total_wl++;
+  			stats->player[player-1].wins++;
+  			stats->player[player-1].losses--;
+  			for (int x = 0; x < settings->gameSettings.playerAmount; stats->player[x++].losses++);
 
-            print_matrix(matrix, settings, colourDict); // to highlight winning nodes
-            printf("Player %hd wins!\n", player);
-            break;
+        print_matrix(matrix, settings, colourDict); // to highlight winning nodes
+        printf("Player %hd wins!\n", player);
+        break;
     } // draw condition
-        else if (i >= max_moves-1){
-            log_stderr(0, 1, "Game over - a draw");
-          	stats->total_draws++;
-			      for (int x = 0; x < settings->gameSettings.playerAmount; stats->player[x++].draws++);
-            print_matrix(matrix, settings, colourDict); // to hide log msg
+    else if (i >= max_moves-1){
+        log_stderr(0, 1, "Game over - a draw");
+        stats->total_draws++;
+	      for (int x = 0; x < settings->gameSettings.playerAmount; stats->player[x++].draws++);
+        print_matrix(matrix, settings, colourDict); // to hide log msg
 
-            printf("No more moves - Draw!\n");
-            break;
-        }
-	}
+        printf("No more moves - Draw!\n");
+        break;
+    }
+  }
 
 	// log_moves(matrix, moves, max_moves, log_name);
     printf("Press any key to continue: ");
@@ -334,6 +329,9 @@ short bot_move(struct matrix_t* matrix, short player, short current_move, short 
 
 	for (int x = 0; x < matrix->columns; x++)
 	{
+    /*
+      NOTE: You cant be creating matrixes for every column o every bot move - too wasteful
+    */
 		if (bot_can_play(matrix, x))
 		{
 			printf("%d ", x);
@@ -358,13 +356,12 @@ short bot_move(struct matrix_t* matrix, short player, short current_move, short 
 		}
 	}
 
-	printf("\nScores: ");
-	for (int x = 0; x < matrix->columns; x++)
-	{
-		printf("%d ", scores[x]);
-	}
-  getchar();
-	printf("\n");
+	// printf("\nScores: ");
+	// for (int x = 0; x < matrix->columns; x++)
+	// {
+	// 	printf("%d ", scores[x]);
+	// }
+	// printf("\n");
 
 	return highest_score_x;
 }

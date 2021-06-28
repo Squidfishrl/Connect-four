@@ -11,7 +11,7 @@
 
 void init(); // starts main menu and prepares all needed vars
 void display_main_menu(struct settings_t* settings, struct dict_t* colourDict, struct stats_t* stats);
-void quit(struct settings_t* settings, struct dict_t* colourDict); // frees all rescources and quits  NOTE: add stats when done
+void quit(struct settings_t* settings, struct dict_t* colourDict, struct stats_t* stats); // frees all rescources and quits  NOTE: add stats when done
 
 /* -------------------------------------------------------------------------- */
 
@@ -31,7 +31,7 @@ int main(int argc, char const *argv[]) {
 
 /* FUNCTION DEFINITIONS */
 
-void quit(struct settings_t* settings, struct dict_t* colourDict){
+void quit(struct settings_t* settings, struct dict_t* colourDict, struct stats_t* stats){
 
     log_stderr(0, 1, "Freeing rescources");
 
@@ -40,6 +40,8 @@ void quit(struct settings_t* settings, struct dict_t* colourDict){
 
     // free settings
     free_settings(settings);
+
+    free_stats(stats);
 
     system("clear");
 
@@ -61,7 +63,7 @@ void init(){
     // check if dict failed
     if(colourDict == NULL){
         log_stderr(0, 3, "Failed initializing colour dictionary");
-        quit(NULL, colourDict);
+        quit(NULL, colourDict, NULL);
         return;
     }
 
@@ -76,7 +78,7 @@ void init(){
     // check if settings failed
     if(settings_success == false){
         log_stderr(0, 3, "Failed initializing settings");
-        quit(settings, colourDict);
+        quit(settings, colourDict, NULL);
         return;
     }
 
@@ -94,7 +96,7 @@ void init(){
 
 
     // after main menu quit -> free all rescources
-    quit(settings, colourDict);
+    quit(settings, colourDict, stats);
 }
 
 void display_main_menu(struct settings_t* settings, struct dict_t* colourDict, struct stats_t* stats){
