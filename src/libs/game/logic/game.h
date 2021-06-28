@@ -62,7 +62,9 @@ void game_loop(struct settings_t* settings, struct stats_t* stats, struct dict_t
 		    stats->player[x].games++;
 	  }
 
-    clock_t start, stop;
+    // clock_t start, stop;
+    time_t start, stop;
+    start = time(NULL);
     long long total_duration = 0;
 
 	// Get player input - Done
@@ -71,7 +73,7 @@ void game_loop(struct settings_t* settings, struct stats_t* stats, struct dict_t
 	// Log move - Done
 	// Display matrix - Done
 	// Check win - Done
-    start = clock();
+    //start = clock();
 
     print_matrix(matrix, settings, colourDict);
 
@@ -134,12 +136,12 @@ void game_loop(struct settings_t* settings, struct stats_t* stats, struct dict_t
 
     print_matrix(matrix, settings, colourDict);
 
-    stop = clock();
+    stop = time(NULL);
 
-		long long duration = 1000.0 * (stop - start) / CLOCKS_PER_SEC - total_duration;
-        stats->total_playtime += duration;
-        for (int x = 0; x < settings->gameSettings.playerAmount; stats->player[x++].playtime += duration);
-        total_duration += duration;
+		long long duration = stop - start - total_duration;
+    stats->total_playtime += duration;
+    for (int x = 0; x < settings->gameSettings.playerAmount; stats->player[x++].playtime += duration);
+    total_duration += duration;
 
         // win condition
     if(check_win(matrix, player, position, settings->gameSettings.connectAmount)){

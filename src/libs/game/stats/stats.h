@@ -462,24 +462,29 @@ void display_stats_menu(struct stats_t* stats, struct dict_t* colourDict){
     printf("%s  -%s %sWins: %lld%s\n", flash, def, white, stats->total_wl, def);
     printf("%s  -%s %sDraws: %lld%s\n", flash, def, white, stats->total_draws, def);
     printf("%s  -%s %sMoves: %lld%s\n", flash, def, white, stats->total_moves, def);
-    printf("%s  -%s %sAverage moves per game: %lld%s\n", flash, def, white, stats->total_moves/stats->total_games, def);
+    printf("%s  -%s %sAverage moves per game: %lld%s\n", flash, def, white, (stats->total_games == 0 ? 0 : stats->total_moves/stats->total_games), def);
     printf("%s  -%s %sPlaytime: %lld%s\n", flash, def, white, stats->total_playtime, def);
-    printf("%s  -%s %sAverage playtime per game: %lld%s\n", flash, def, white, stats->total_playtime/stats->total_games, def);
+    printf("%s  -%s %sAverage playtime per game: %lld%s\n", flash, def, white, (stats->total_games == 0 ? 0 : stats->total_playtime/stats->total_games), def);
 
     for(short i = 0; i<10; i++){
+				if (i >= 2 && stats->player[i].games == 0)
+				{
+						break;
+				}
         printf("%s%s \nPlayer %hd stats %s\n", heavy, white, i+1, def);
 
         printf("%s  -%s %sGames: %lld%s\n", flash, def, white, stats->player[i].games, def);
         printf("%s  -%s %sWins: %lld%s\n", flash, def, white, stats->player[i].wins, def);
         printf("%s  -%s %sDraws: %lld%s\n", flash, def, white, stats->player[i].draws, def);
         printf("%s  -%s %sLosses: %lld%s\n", flash, def, white, stats->player[i].losses, def);
-        printf("%s  -%s %sWin/Lose ratio: %lf%s\n", flash, def, white, (double)stats->player[i].wins/stats->player[i].losses, def);
+        printf("%s  -%s %sWin/Lose ratio: %lf%s\n", flash, def, white, (stats->player[i].losses == 0 ? 0 : (double)stats->player[i].wins/stats->player[i].losses), def);
         printf("%s  -%s %sMoves: %lld%s\n", flash, def, white, stats->player[i].moves, def);
         printf("%s  -%s %sPlaytime: %lld%s\n", flash, def, white, stats->player[i].playtime, def);
         printf("%s  -%s %sBot games: %lld%s\n", flash, def, white, stats->player[i].bot_games, def);
+        printf("%s  -%s %sBot wins: %lld%s\n", flash, def, white, stats->player[i].bot_wins, def);
         printf("%s  -%s %sBot draws: %lld%s\n", flash, def, white, stats->player[i].bot_draws, def);
         printf("%s  -%s %sBot losses: %lld%s\n", flash, def, white, stats->player[i].bot_losses, def);
-        printf("%s  -%s %sBot Win/Lose ratio: %lf%s\n", flash, def, white, (double)stats->player[i].bot_wins/stats->player[i].bot_losses, def);
+        printf("%s  -%s %sBot Win/Lose ratio: %lf%s\n", flash, def, white, (stats->player[i].bot_losses == 0 ? 0 : (double)stats->player[i].bot_wins/stats->player[i].bot_losses), def);
         printf("%s  -%s %sBot moves: %lld%s\n", flash, def, white, stats->player[i].bot_moves, def);
         printf("%s  -%s %sBot playtime: %lld%s\n", flash, def, white, stats->player[i].bot_playtime, def);
     }
