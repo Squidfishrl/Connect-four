@@ -39,10 +39,3 @@ Required for automated launch. Game might not work with different compilers / co
 
 #### - console using Bash shell
 Required for automated launch and error logging.
-
-## How we made it
-[Connect Four](https://github.com/Squidfishrl/Connect-four) was developed as a [TUES](https://www.elsys-bg.org/) school project for 10th grade.
-
-Work was split between 2 people:
-- [Ivaylo Genchev / Squidfishrl](https://github.com/Squidfishrl) - Created game board, implemented settings, made the main menu, added error loggingat
-- [Daniel Paunov / McAwesome123](https://github.com/McAwesome123) - Created game logic, implemented stats, added bot
