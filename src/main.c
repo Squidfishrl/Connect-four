@@ -90,7 +90,7 @@ void init(){
     srand(time(NULL));
 
     // launch main menu
-    display_main_menu(settings, colourDict, NULL);
+    display_main_menu(settings, colourDict, stats);
 
 
     // after main menu quit -> free all rescources
