@@ -81,7 +81,7 @@ void init(){
     }
 
     // get stats
-    // TODO:
+    struct stats_t* stats = init_stats("stats.bin");
 
     log_stderr(!settings->gameSettings.debugMode, 0, "Changing debug mode from settings"); // return back to debugmode from settings
 
@@ -92,6 +92,7 @@ void init(){
     // launch main menu
     display_main_menu(settings, colourDict, NULL);
 
+
     // after main menu quit -> free all rescources
     quit(settings, colourDict);
 }
@@ -99,6 +100,7 @@ void init(){
 void display_main_menu(struct settings_t* settings, struct dict_t* colourDict, struct stats_t* stats){
 
     log_stderr(0, 1, "Displaying main menu");
+
 
     short menuNO;
     bool exitCheck;
@@ -138,7 +140,7 @@ void display_main_menu(struct settings_t* settings, struct dict_t* colourDict, s
 
         if(menuNO == 1){ // start new game
 
-            game_loop(settings, colourDict);
+        game_loop(settings, stats, colourDict);
         }else if(menuNO == 2){ // show stats menu
 
             display_stats_menu(stats, colourDict);
