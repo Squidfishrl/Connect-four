@@ -5,9 +5,7 @@
 #include <string.h>
 #include <time.h>
 
-
 #include "../stats/stats.h" // has all the other headers included
-
 
 /* -------------------------------------------------------------------------- */
 
@@ -15,8 +13,8 @@
 /* FUNCTION DECLARATIONS */
 
 void game_loop(struct settings_t* settings, struct stats_t* stats, struct dict_t* colourDict);
-short add_piece(struct matrix_t* matrix, short player, short position);
-short check_win(struct matrix_t* matrix, short player, short position, short connectAmount);
+struct node_t* add_piece(struct matrix_t* matrix, short player, short position); // returns the new node
+bool check_win(struct node_t* start, short connectAmount);
 void log_moves(struct matrix_t* matrix, short moves[], short max_moves, char *log_name, struct playerSettings_t* settings);
 short bot_move(struct matrix_t* matrix, short player, short current_move, short max_moves, struct settings_t* settings, struct dict_t* colourDict);
 bool bot_can_play(struct matrix_t* matrix, short position);
@@ -34,6 +32,8 @@ void game_loop(struct settings_t* settings, struct stats_t* stats, struct dict_t
 
     log_stderr(0, 1, "Starting game loop");
 
+    // create matrix
+
     struct matrix_t* matrix = create_matrix(settings->gameSettings.boardRows, settings->gameSettings.boardColumns);
         if(matrix == NULL){
             log_stderr(0, 3, "Failed creating matrix");
@@ -42,14 +42,18 @@ void game_loop(struct settings_t* settings, struct stats_t* stats, struct dict_t
             log_stderr(0, 0, "Successfully created matrix");
         }
 
+    // get filenames
+
     char log_name[settings->fileSettings.logFileNameLen + strlen("../res/")];
     sprintf(log_name, "../res/%s", settings->fileSettings.logFileName);
     // strcat(log_name, settings->fileSettings.logFileName);
     char stats_name[settings->fileSettings.statsFileNameLen + strlen("../res/bin/")];
     sprintf(stats_name, "../res/bin/%s", settings->fileSettings.statsFileName);
 
+
     short player = 1;
     short position = 0;
+    struct node_t* newNode;
 
     const short max_moves = matrix->rows * matrix->columns;
 
@@ -103,28 +107,12 @@ void game_loop(struct settings_t* settings, struct stats_t* stats, struct dict_t
 
             position--;
 
-  			switch (add_piece(matrix, player, position))
-  			{
-  				case 0:		// Successful move
-  					   break;
+            newNode = add_piece(matrix, player, position);
 
-  				case 1:		// Position exceeds board width
-                      // shouldnt be possible with input validation added
-  					printf("Position out of bounds!\n");
-            log_stderr(0, 2, "Position out of bounds");
-  					continue;
-
-  				case 2:		// Position exceeds board height
-
-  					printf("Position has too many pieces!\n");
-            log_stderr(0, 2, " Column full - can't add piece");
-  					continue;
-
-  				default:	// Position is invalid for some other reason (unused?)
-  					printf("Position invalid!\n");
-            log_stderr(0, 2, "Invalid position for unknown reasons");
-  					continue;
-  			}
+            // position was invalid (usually adding piece in full column)
+            if(newNode == NULL){
+                continue; // loop again to get valid input
+            }
 
   			break;
   		}
@@ -136,7 +124,7 @@ void game_loop(struct settings_t* settings, struct stats_t* stats, struct dict_t
     print_matrix(matrix, settings, colourDict);
 
         // win condition
-    if(check_win(matrix, player, position, settings->gameSettings.connectAmount)){
+    if(check_win(newNode, settings->gameSettings.connectAmount)){
         log_stderr(0, 1, "Game over - a player won");
   			stats->total_wl++;
   			stats->player[player-1].wins++;
@@ -174,14 +162,15 @@ void game_loop(struct settings_t* settings, struct stats_t* stats, struct dict_t
 	return;
 }
 
-short add_piece(struct matrix_t* matrix, short player, short position)
+struct node_t* add_piece(struct matrix_t* matrix, short player, short position)
 {
 
     log_stderr(0, 0, "Adding piece");
 
 	if (position < 0 || position >= matrix->columns)
 	{
-		return 1;
+        log_stderr(0, 2, "Position out of bounds");
+		return NULL;
 	}
 
 	struct node_t* node = get_node_by_cords(matrix, 0, position);
@@ -191,33 +180,41 @@ short add_piece(struct matrix_t* matrix, short player, short position)
 
 	if (node == NULL)
 	{
-		return 2;
+        log_stderr(0, 2, "Column already filled, cannot add piece");
+        return NULL;
 	}
 	else
 	{
 		node->type = player;
 	}
 
-	return 0;
+	return node;
 }
 
-short check_win(struct matrix_t* matrix, short player, short position, short connectAmount)
-{
+// O(connectAmount) 8*connectAmount to be exact
 
-    /* TODO: maybe add another argument struct node_t* node.
-    its then pointed to the new piece. Could be useful to then pass it to check_win
-    making it O(1) - even though there are some fors they iterate 7 times max(no matter the arguments)
+bool check_win(struct node_t* start, short connectAmount){
+
+    /*
+    check win from a current node (all its directions)
+    the most recent node should be used as start
     */
 
     log_stderr(0, 0, "Checking for win");
 
-    struct node_t* start = get_node_by_cords(matrix, matrix->rows-1, position), *node;
+    // get player
+    short player = start->type;
+
+    // check if player is valid
+    if(player == 0){
+        // player is empty space
+        log_stderr(0, 2, "Cannot check for win from empty node");
+        return false;
+    }
+
+    struct node_t* node;
     short piece_count;
     bool checkWin = false;
-
-
-    // start = last placed node
-    for (; start->down != NULL && start->type == 0; start = start->down);
 
     // up and down case
     for(piece_count = 1, node = start; node->up != NULL && node->up->type == player; node = node->up, piece_count++);
@@ -386,7 +383,7 @@ bool bot_winning_move(struct matrix_t* matrix, short player, short position, str
 
 	node->type = player;
 
-	bool is_winning = check_win(matrix, player, position, settings->gameSettings.connectAmount);
+	bool is_winning = check_win(node, settings->gameSettings.connectAmount);
 
 	node->type = 0;
 
