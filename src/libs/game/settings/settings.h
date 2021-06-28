@@ -485,7 +485,7 @@ bool read_settings(char* fileName, struct settings_t* settings){
         sprintf(logMsg, "Successfully closed %s", fileName);
         log_stderr(0, 0, logMsg);
     }else{
-        sprintf(logMsg, "Successfully closed %s", fileName);
+        sprintf(logMsg, "Error closing %s", fileName);
         log_stderr(0, 3, logMsg);
     }
 

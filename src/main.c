@@ -83,7 +83,12 @@ void init(){
     }
 
     // get stats
-    struct stats_t* stats = init_stats("stats.bin");
+    bool stats_success = false;
+    struct stats_t* stats = init_stats("stats.bin", &stats_success);
+
+    if(stats_success == false){
+      quit(settings, colourDict, stats);
+    }
 
     log_stderr(!settings->gameSettings.debugMode, 0, "Changing debug mode from settings"); // return back to debugmode from settings
 

@@ -28,7 +28,7 @@ struct stats_t
 
 /* FUNCTION DECLARATIONS */
 
-struct stats_t* init_stats(char* fileName);
+struct stats_t* init_stats(char* fileName, bool* success);
 void define_stats(struct stats_t* stats);
 bool read_stats_file(struct stats_t* stats, char* fileName); /// TODO
 bool write_stats_file(struct stats_t* stats, char* fileName); /// TODO
@@ -41,30 +41,56 @@ void free_stats(struct stats_t* stats);
 /* FUNCTION DEFINITIONS */
 
 void free_stats(struct stats_t* stats){
+
+	if(stats == NULL){
+			log_stderr(0, 2, "stats is already NULL");
+	}
+
 	free(stats);
 }
 
-struct stats_t* init_stats(char* fileName)
+struct stats_t* init_stats(char* fileName, bool* success)
 {
-	struct stats_t* stats = malloc(sizeof(struct stats_t));
+
+	log_stderr(0, 1, "Initializing stats");
+
+	struct stats_t* stats = (struct stats_t*)malloc(sizeof(struct stats_t));
+	if(stats == NULL){
+			log_stderr(0, 3, "Memory allocation failed on stats initialization");
+			*success = false;
+			return stats;
+	}else{
+			log_stderr(0, 0, "Successfully allocated memory for stats");
+	}
+
     char editedFileName[strlen("../res/bin/") + strlen(fileName)];
     sprintf(editedFileName, "../res/bin/%s", fileName);
 
     if (!read_stats_file(stats, editedFileName))
 	{
+		log_stderr(0, 1, "Cant read file or read error occured");
+
 		printf("Failed to open stats file!\n");
 		define_stats(stats);
+
 		if (!write_stats_file(stats, editedFileName))
 		{
+			*success = false;
+			log_stderr(0, 3, "Error writing stats file");
 			printf("Failed to create stats file!\n");
 		}
 	}
+
+	*success = true;
 
     return stats;
 }
 
 void define_stats(struct stats_t* stats)
 {
+
+	log_stderr(0, 1, "Defining stats");
+
 	stats->total_games = stats->total_wl = stats->total_draws = stats->total_moves = stats->total_playtime = 0;
 	for (int x = 0; x < 10; x++)
 	{
@@ -76,6 +102,8 @@ void define_stats(struct stats_t* stats)
 
 bool read_stats_file(struct stats_t* stats, char* fileName)
 {
+	log_stderr(0, 1, "Reading stats");
+	char logMsg[50];
 	FILE* statsFile;
 
     if((statsFile = fopen(fileName, "rb")))
@@ -83,28 +111,273 @@ bool read_stats_file(struct stats_t* stats, char* fileName)
     	for (short x = 0; x < 10; x++)
 		{
 			fread(&stats->player[x].games, sizeof(long long), 1, statsFile);
+
+			if(ferror(statsFile)){
+					// read error occured
+					log_stderr(0, 3, "Read error occured");
+					return false;
+			}else if(feof(statsFile)){
+					// eof too early error
+					log_stderr(0, 3, "Reached EOF too early");
+					return false;
+			}else{
+					sprintf(logMsg, "Read player %hd games -> %lld", x, stats->player[x].games);
+					log_stderr(0, 0, logMsg);
+			}
+
 			fread(&stats->player[x].wins, sizeof(long long), 1, statsFile);
+
+			if(ferror(statsFile)){
+					// read error occured
+					log_stderr(0, 3, "Read error occured");
+					return false;
+			}else if(feof(statsFile)){
+					// eof too early error
+					log_stderr(0, 3, "Reached EOF too early");
+					return false;
+			}else{
+					sprintf(logMsg, "Read player %hd wins -> %lld", x, stats->player[x].wins);
+					log_stderr(0, 0, logMsg);
+			}
+
 			fread(&stats->player[x].draws, sizeof(long long), 1, statsFile);
+
+			if(ferror(statsFile)){
+					// read error occured
+					log_stderr(0, 3, "Read error occured");
+					return false;
+			}else if(feof(statsFile)){
+					// eof too early error
+					log_stderr(0, 3, "Reached EOF too early");
+					return false;
+			}else{
+					sprintf(logMsg, "Read player %hd draws -> %lld", x, stats->player[x].draws);
+					log_stderr(0, 0, logMsg);
+			}
+
 			fread(&stats->player[x].losses, sizeof(long long), 1, statsFile);
+
+			if(ferror(statsFile)){
+					// read error occured
+					log_stderr(0, 3, "Read error occured");
+					return false;
+			}else if(feof(statsFile)){
+					// eof too early error
+					log_stderr(0, 3, "Reached EOF too early");
+					return false;
+			}else{
+					sprintf(logMsg, "Read player %hd losses -> %lld", x, stats->player[x].losses);
+					log_stderr(0, 0, logMsg);
+			}
+
 			fread(&stats->player[x].moves, sizeof(long long), 1, statsFile);
+
+			if(ferror(statsFile)){
+					// read error occured
+					log_stderr(0, 3, "Read error occured");
+					return false;
+			}else if(feof(statsFile)){
+					// eof too early error
+					log_stderr(0, 3, "Reached EOF too early");
+					return false;
+			}else{
+					sprintf(logMsg, "Read player %hd moves -> %lld", x, stats->player[x].moves);
+					log_stderr(0, 0, logMsg);
+			}
+
 			fread(&stats->player[x].playtime, sizeof(long long), 1, statsFile);
+
+			if(ferror(statsFile)){
+					// read error occured
+					log_stderr(0, 3, "Read error occured");
+					return false;
+			}else if(feof(statsFile)){
+					// eof too early error
+					log_stderr(0, 3, "Reached EOF too early");
+					return false;
+			}else{
+					sprintf(logMsg, "Read player %hd playtime -> %lld", x, stats->player[x].playtime);
+					log_stderr(0, 0, logMsg);
+			}
+
 			fread(&stats->player[x].bot_games, sizeof(long long), 1, statsFile);
+
+			if(ferror(statsFile)){
+					// read error occured
+					log_stderr(0, 3, "Read error occured");
+					return false;
+			}else if(feof(statsFile)){
+					// eof too early error
+					log_stderr(0, 3, "Reached EOF too early");
+					return false;
+			}else{
+					sprintf(logMsg, "Read player %hd bot games -> %lld", x, stats->player[x].bot_games);
+					log_stderr(0, 0, logMsg);
+			}
+
 			fread(&stats->player[x].bot_wins, sizeof(long long), 1, statsFile);
+
+			if(ferror(statsFile)){
+					// read error occured
+					log_stderr(0, 3, "Read error occured");
+					return false;
+			}else if(feof(statsFile)){
+					// eof too early error
+					log_stderr(0, 3, "Reached EOF too early");
+					return false;
+			}else{
+					sprintf(logMsg, "Read player %hd bot bot wins -> %lld", x, stats->player[x].bot_wins);
+					log_stderr(0, 0, logMsg);
+			}
+
 			fread(&stats->player[x].bot_draws, sizeof(long long), 1, statsFile);
+
+			if(ferror(statsFile)){
+					// read error occured
+					log_stderr(0, 3, "Read error occured");
+					return false;
+			}else if(feof(statsFile)){
+					// eof too early error
+					log_stderr(0, 3, "Reached EOF too early");
+					return false;
+			}else{
+					sprintf(logMsg, "Read player %hd bot bot draws -> %lld", x, stats->player[x].bot_draws);
+					log_stderr(0, 0, logMsg);
+			}
+
 			fread(&stats->player[x].bot_losses, sizeof(long long), 1, statsFile);
+
+			if(ferror(statsFile)){
+					// read error occured
+					log_stderr(0, 3, "Read error occured");
+					return false;
+			}else if(feof(statsFile)){
+					// eof too early error
+					log_stderr(0, 3, "Reached EOF too early");
+					return false;
+			}else{
+					sprintf(logMsg, "Read player %hd bot bot losses -> %lld", x, stats->player[x].losses);
+					log_stderr(0, 0, logMsg);
+			}
+
 			fread(&stats->player[x].bot_moves, sizeof(long long), 1, statsFile);
+
+			if(ferror(statsFile)){
+					// read error occured
+					log_stderr(0, 3, "Read error occured");
+					return false;
+			}else if(feof(statsFile)){
+					// eof too early error
+					log_stderr(0, 3, "Reached EOF too early");
+					return false;
+			}else{
+					sprintf(logMsg, "Read player %hd bot bot moves -> %lld", x, stats->player[x].bot_moves);
+					log_stderr(0, 0, logMsg);
+			}
+
 			fread(&stats->player[x].bot_playtime, sizeof(long long), 1, statsFile);
+
+			if(ferror(statsFile)){
+					// read error occured
+					log_stderr(0, 3, "Read error occured");
+					return false;
+			}else if(feof(statsFile)){
+					// eof too early error
+					log_stderr(0, 3, "Reached EOF too early");
+					return false;
+			}else{
+					sprintf(logMsg, "Read player %hd bot bot playtime -> %lld", x, stats->player[x].bot_playtime);
+					log_stderr(0, 0, logMsg);
+			}
+
 		}
+
 		fread(&stats->total_games, sizeof(long long), 1, statsFile);
+
+		if(ferror(statsFile)){
+				// read error occured
+				log_stderr(0, 3, "Read error occured");
+				return false;
+		}else if(feof(statsFile)){
+				// eof too early error
+				log_stderr(0, 3, "Reached EOF too early");
+				return false;
+		}else{
+				sprintf(logMsg, "Read global games -> %lld", stats->total_games);
+				log_stderr(0, 0, logMsg);
+		}
+
 		fread(&stats->total_wl, sizeof(long long), 1, statsFile);
+
+		if(ferror(statsFile)){
+				// read error occured
+				log_stderr(0, 3, "Read error occured");
+				return false;
+		}else if(feof(statsFile)){
+				// eof too early error
+				log_stderr(0, 3, "Reached EOF too early");
+				return false;
+		}else{
+				sprintf(logMsg, "Read global wins -> %lld", stats->total_wl);
+				log_stderr(0, 0, logMsg);
+		}
+
 		fread(&stats->total_draws, sizeof(long long), 1, statsFile);
+
+		if(ferror(statsFile)){
+				// read error occured
+				log_stderr(0, 3, "Read error occured");
+				return false;
+		}else if(feof(statsFile)){
+				// eof too early error
+				log_stderr(0, 3, "Reached EOF too early");
+				return false;
+		}else{
+				sprintf(logMsg, "Read global draws -> %lld", stats->total_draws);
+				log_stderr(0, 0, logMsg);
+		}
+
 		fread(&stats->total_moves, sizeof(long long), 1, statsFile);
+
+		if(ferror(statsFile)){
+				// read error occured
+				log_stderr(0, 3, "Read error occured");
+				return false;
+		}else if(feof(statsFile)){
+				// eof too early error
+				log_stderr(0, 3, "Reached EOF too early");
+				return false;
+		}else{
+				sprintf(logMsg, "Read global moves -> %lld", stats->total_moves);
+				log_stderr(0, 0, logMsg);
+		}
+
 		fread(&stats->total_playtime, sizeof(long long), 1, statsFile);
 
-    	fclose(statsFile);
-    }
-    else
-	{
+		if(ferror(statsFile)){
+				// read error occured
+				log_stderr(0, 3, "Read error occured");
+				return false;
+		}else if(feof(statsFile)){
+				// eof too early error
+				log_stderr(0, 3, "Reached EOF too early");
+				return false;
+		}else{
+				sprintf(logMsg, "Read global playtime -> %lld", stats->total_playtime);
+				log_stderr(0, 0, logMsg);
+		}
+
+		// check if fclose failed
+    	if(fclose(statsFile) == 0){
+				sprintf(logMsg, "Successfully closed %s", fileName);
+				log_stderr(0, 0, logMsg);
+			}else{
+				sprintf(logMsg, "Cant close %s", fileName);
+				log_stderr(0, 3, logMsg);
+			}
+    }else{
+				sprintf(logMsg, "Cant open %s", fileName);
+				log_stderr(0, 3, logMsg);
         printf("Failed to open stats file!\n");
         return false;
     }
@@ -114,6 +387,10 @@ bool read_stats_file(struct stats_t* stats, char* fileName)
 
 bool write_stats_file(struct stats_t* stats, char* fileName)
 {
+
+	log_stderr(0, 1, "Writing stats file");
+	char logMsg[50];
+
 	FILE* statsFile;
 
     if((statsFile = fopen(fileName, "wb+")))
@@ -141,10 +418,18 @@ bool write_stats_file(struct stats_t* stats, char* fileName)
 		fwrite(&stats->total_moves, sizeof(long long), 1, statsFile);
 		fwrite(&stats->total_playtime, sizeof(long long), 1, statsFile);
 
-    	fclose(statsFile);
+		if(fclose(statsFile) == 0){
+			sprintf(logMsg, "Successfully closed %s", fileName);
+			log_stderr(0, 0, logMsg);
+		}else{
+			sprintf(logMsg, "Cant close %s", fileName);
+			log_stderr(0, 3, logMsg);
+		}
     }
     else
-	{
+	  {
+				sprintf(logMsg, "Failed opening %s", fileName);
+				log_stderr(0, 3, logMsg);
         printf("Failed to create or open stats file!\n");
         return false;
     }
@@ -165,6 +450,8 @@ void display_stats_menu(struct stats_t* stats, struct dict_t* colourDict){
     heavy = binary_search_dict('H', colourDict);
     yellow = binary_search_dict('Y', colourDict);
 
+
+		log_stderr(0, 0, "Printing  stats menu");
     system("clear");
 
     printf("%s%s CONNECT FOUR %s", heavy, yellow, def);
