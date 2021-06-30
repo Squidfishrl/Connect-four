@@ -51,12 +51,19 @@ void free_matrix(struct matrix_t* matrix);
 struct matrix_t* create_matrix(int rows, int columns);
 struct matrix_t* init_matrix(int rows, int columns); // help function for create_matrix
 struct node_t* init_node(int row, int column, struct node_t* up, struct node_t* down, struct node_t* left, struct node_t* right);
-struct matrix_t* clone_matrix(struct matrix_t* matrix);
+
+
+// not needed
+//struct matrix_t* clone_matrix(struct matrix_t* matrix);
+// void basic_print_matrix(struct matrix_t* matrix); // for debugging
+// void matrix_to_array(struct matrix_t* matrix, short arr[][matrix->columns]); // savestates for matrix when evaluating -> adds only values
+// void array_to_matrix(struct matrix_t* matrix, short arr[][matrix->columns]); // changes values only
 
 /* -------------------------------------------------------------------------- */
 
 
 /* FUNCTION DEFINITIONS */
+
 
 // O(1)
 struct node_t* get_node_by_cords(struct matrix_t* matrix, int row, int column){
@@ -64,7 +71,7 @@ struct node_t* get_node_by_cords(struct matrix_t* matrix, int row, int column){
     return matrix->nodeMap[row][column];
 }
 
-// O(n), where n is the amount of nodes connected to the matrix
+// O(kn) k = rows, n = columns in a matrix
 void print_matrix(struct matrix_t* matrix, struct settings_t* settings,struct dict_t* colourDict){
 
     log_stderr(0, 1, "Printing board");
@@ -139,7 +146,7 @@ void print_matrix(struct matrix_t* matrix, struct settings_t* settings,struct di
     printf("\n");
 }
 
-// O(n), where n is the amount of nodes, connected to the matrix
+// O(kn) k = rows, n = columns in a matrix
 void free_matrix(struct matrix_t* matrix){
 
     char logMsg[50];
@@ -370,18 +377,79 @@ struct node_t* init_node(int row, int column, struct node_t* up, struct node_t* 
     return initNode;
 }
 
-struct matrix_t* clone_matrix(struct matrix_t* matrix)
-{
-	struct matrix_t* new_matrix = create_matrix(matrix->rows, matrix->columns);
-	for (int y = 0; y < matrix->rows; y++)
-	{
-		for (int x = 0; x < matrix->columns; x++)
-		{
-			get_node_by_cords(new_matrix, y, x)->type = get_node_by_cords(matrix, y, x)->type;
-		}
-	}
-
-	return new_matrix;
-}
+// struct matrix_t* clone_matrix(struct matrix_t* matrix)
+// {
+// 	struct matrix_t* new_matrix = create_matrix(matrix->rows, matrix->columns);
+// 	for (int y = 0; y < matrix->rows; y++)
+// 	{
+// 		for (int x = 0; x < matrix->columns; x++)
+// 		{
+// 			get_node_by_cords(new_matrix, y, x)->type = get_node_by_cords(matrix, y, x)->type;
+// 		}
+// 	}
+//
+// 	return new_matrix;
+// }
 
 /* -------------------------------------------------------------------------- */
+
+// // O(kn) k = rows, n = columns in a matrix
+// void array_to_matrix(struct matrix_t* matrix, short arr[][matrix->columns]){
+//
+//     // iterate through the rows
+//     for(short i = 0; i<matrix->rows; i++){
+//
+//         // iterate through the columns
+//         for(short b = 0; b<matrix->columns; b++){
+//             // assign arr values to matrix nodes
+//             matrix->nodeMap[i][b]->type = arr[i][b];
+//         }
+//     }
+// }
+//
+// // O(kn) k = rows, n = columns in a matrix
+// void matrix_to_array(struct matrix_t* matrix, short arr[][matrix->columns]){
+//
+//     // iterate through the rows
+//     for(short i = 0; i < matrix->rows; i++){
+//
+//         // iterate through the columns
+//         for(short b = 0; b<matrix->columns; b++){
+//
+//             // assign node values to arr
+//             arr[i][b] = matrix->nodeMap[i][b]->type;
+//         }
+//     }
+// }
+//
+// // O(kn) k = rows, n = columns in a matrix
+
+// void basic_print_matrix(struct matrix_t* matrix){
+//
+//     for(struct node_t* iterNode1 = get_node_by_cords(matrix, matrix->rows-1, 0); iterNode1 != NULL; iterNode1 = iterNode1->down){
+//
+//         // iterate through the columns
+//         for(struct node_t* iterNode2 = iterNode1; iterNode2 != NULL; iterNode2 = iterNode2->right){
+//             if(iterNode2->column == 0){
+//                 printf("|");
+//             }
+//
+//             // if empty nodes(no pieces)
+//             if(iterNode2->type == 0){
+//                 printf(" ");
+//             }else if(iterNode2->type <= 2){
+//                 if(iterNode2->type == 1){
+//                     printf("X");
+//                 }else if(iterNode2->type == 2){
+//                     printf("O");
+//                 }
+//
+//             }
+//
+//             printf("|");
+//         }
+//
+//         printf("\n");
+//     }
+//
+// }
