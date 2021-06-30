@@ -13,7 +13,23 @@
 
 /* STRUCTURE DEFINITIONS */
 
+struct connection_t{
 
+    struct node_t* start;
+    struct node_t* end;
+
+    // NOTE technically all you need is start and end but I thought this is more convenient
+    short amount;
+    short player;
+
+    char side;
+    /*
+    1-horizontal
+    2-vertical
+    3-diagonal (up->down)
+    4-diagonal (down->up)
+    */
+};
 
 /* -------------------------------------------------------------------------- */
 
@@ -30,10 +46,58 @@ void log_moves(struct matrix_t* matrix, short moves[], short max_moves, char *lo
 /* BOT */
 
 short bot_moves(struct matrix_t* board, short player, struct settings_t* settings);
-int eval_move(struct node_t* move, short connectAmount);
-short basic_bot_move(struct matrix_t* board, short player, struct settings_t* settings); // simply evaluate all the positions without going in depth - essentially depth 1
-short eval_pos_depth(struct matrix_t* board, struct node_t* piece, short depth, short maximizingPlayer, short currentPlayer, short playerAmount, short connectAmount, short* bestColumn);
+int eval_board(struct matrix_t* board, short player, short connectAmount);
+int eval_move(struct node_t* move, short connectAmount); // TODO: evaluate entire board instead
+short basic_bot_move(struct matrix_t* board, short player, struct settings_t* settings); // simply evaluate all the positions without going in depth - essentially depth 1 (very ugly)
+short eval_pos_depth(struct matrix_t* board, struct node_t* piece, short depth, short maximizingPlayer, short currentPlayer, short playerAmount, short connectAmount, short* bestColumn); // TODO: return struct containing both column and score
 
+
+struct node_t* get_top_node(struct matrix_t* board, short column);
+/*
+    O(board->rows)
+    Get the top most node of *set column that isn't empty (type != 0)
+
+    returns (struct node_t*)
+        NULL - no such nodes exist (no node has been inserted in *set column)
+        Pointer to topmost node - search was successfull
+*/
+
+
+bool is_exposed(struct node_t* node);
+/*
+    O(1)
+    Check if any of the surrounding nodes of *set node are empty (type == 0)
+
+    returns (bool)
+        true - *set node has atleast 1 surrounding node that is empty (type == 0)
+        false - *set node has 0 surrounding nodes that are empty (type == 0)
+*/
+
+
+bool is_adj_column_empty(struct matrix_t* board, short column);
+/*
+    O(1)
+    Check if any of the columns surrounding *set column have no pieces
+
+    returns (bool)
+        true - either left/right column of *set column have no pieces
+        false - both left and right columns of *set column have atleast 1 piece
+*/
+
+
+short fetch_exposed_nodes(struct matrix_t* board, struct node_t* exposedNodes[], short exposedNodesMaxSize);
+/*
+    O(exposed nodes) -> worst case is around (board->rows * board->columns/2) + board->columns
+    //    X   O   X
+    //    O   X   O
+    //    X   O   X
+    //    O X O X O
+
+    Checks every column for exposed nodes and adds them to an array (exposedNodes[])
+
+    returns (short)
+        total exposed nodes added
+*/
 
 
 // short eval_pos_depth(struct matrix_t* board, short depth, short playerEval, short currentPlayer, short playerAmount, struct graphNode_t* graph, short connectionsForWin);
@@ -48,6 +112,167 @@ short eval_pos_depth(struct matrix_t* board, struct node_t* piece, short depth, 
 
 
 /* FUNCTION DEFINITIONS */
+
+bool is_adj_column_empty(struct matrix_t* board, short column){
+
+    /*
+        O(1)
+        Check if any of the columns surrounding *set column have no pieces
+
+        returns (bool)
+            true - either left/right column of *set column have no pieces
+            false - both left and right columns of *set column have atleast 1 piece
+    */
+
+    // get bottomost node
+    struct node_t* node = get_node_by_cords(board, 0, column);
+
+    // check if left column exists
+    if(node->left != NULL){
+        if(node->left->type == 0){
+            return true;
+        }
+    }
+
+    // check if right column exists
+    if(node->right != NULL){
+        if(node->right->type == 0){
+            return true;
+        }
+    }
+
+    return false;
+}
+
+short fetch_exposed_nodes(struct matrix_t* board, struct node_t* exposedNodes[], short exposedNodesMaxSize){
+
+    /*
+        O(exposed nodes) -> worst case is around (board->rows * board->columns/2) + board->columns
+        //    X   O   X
+        //    O   X   O
+        //    X   O   X
+        //    O X O X O
+
+        Checks every column for exposed nodes and adds them to an array (exposedNodes[])
+
+        returns (short)
+            total exposed nodes added
+    */
+
+    struct node_t* currentNode;
+    short exposedNodesCurrSize = 0;
+
+    // iterate over all columns
+    for(short i = 0; i < board->columns; i++){
+
+
+        // essentially -> start from the top. if top is exposed, add top to exposed array. go down and repeat until current is NULL or not exposed (or max array size is reached)
+        // 1 liner :sunglasses:
+        for(currentNode = get_top_node(board, i); currentNode != NULL && is_exposed(currentNode) && exposedNodesCurrSize < exposedNodesMaxSize; exposedNodes[exposedNodesCurrSize++] = currentNode, currentNode = currentNode->down);
+    }
+
+    return exposedNodesCurrSize;
+}
+
+bool is_exposed(struct node_t* node){
+
+    /*
+        O(1)
+        Check if any of the surrounding nodes of *set node are empty (type == 0)
+
+        returns (bool)
+            true - *set node has atleast 1 surrounding node that is empty (type == 0)
+            false - *set node has 0 surrounding nodes that are empty (type == 0)
+    */
+
+    // check if node above is empty
+    if(node->up != NULL && node->up->type == 0){
+        return true;
+    }
+
+    // check if node below is empty
+    if(node->down != NULL && node->down->type == 0){
+        return true;
+    }
+
+    // check if left node is empty
+    if(node->left != NULL && node->left->type == 0){
+        return true;
+    }
+
+    // check if right node is empty
+    if(node->right != NULL && node->right->type == 0){
+        return true;
+    }
+
+    // check if diagonal up left node is empty
+    if(node->up != NULL && node->up->left != NULL && node->up->left->type == 0){
+        return true;
+    }
+
+    // check if diagonal up right node is empty
+    if(node->up != NULL && node->up->right != NULL && node->up->right->type == 0){
+        return true;
+    }
+
+    // check if diagonal down right node is empty
+    if(node->down != NULL && node->down->right != NULL && node->down->right->type == 0){
+        return true;
+    }
+
+    // check if diagonal down left node is empty
+    if(node->down != NULL && node->down->left != NULL && node->down->left->type == 0){
+        return true;
+    }
+
+    // no empty surrounding nodes are found
+    return false;
+}
+
+struct node_t* get_top_node(struct matrix_t* board, short column){
+
+    /*
+        O(board->rows)
+        Get the top most node of *set column that isn't empty (type != 0)
+
+        returns (struct node_t*)
+            NULL - no such nodes exist (no node has been inserted in *set column)
+            Pointer to topmost node - search was successfull
+    */
+
+
+    // get bottomost node in set column
+    struct node_t* searchNode = get_node_by_cords(board, 0, column);
+
+    if(searchNode->type == 0){ // no node has been added to that column
+        return NULL;
+    }
+
+    // iterate until node is empty (type == 0) or column is full
+    for(; searchNode->up != NULL && searchNode->up->type != 0; searchNode = searchNode->up);
+
+    return searchNode;
+}
+
+int eval_board(struct matrix_t* board, short player, short connectAmount){
+
+    short maxExposedNodes = (board->rows * board->columns/2) + board->columns;
+    /*
+        worst case would look like, where exposed nodes are = (board->rows * board->columns/2) + board->columns:
+        X   O   X
+        O   X   O
+        X   O   X
+        O X O X O
+    */
+    struct node_t* exposedNodes[maxExposedNodes];
+
+    // add exposed nodes and fetch their amount
+    short currentExposedNodes = fetch_exposed_nodes(board, exposedNodes, maxExposedNodes);
+    // TODO create a function that returns all connections from a node. Similar to fetch_exposed_nodes in the way it adds to an array and returns array size. array size would always be 4 - vertical horizontal diagonal positive and diagonal negative
+    // TODO from exposedNodes add connections. if connection size is = connection amount return max score. if connections = connect amount - 1 but connectection type = player type  also return max score
+    // TODO before evaluating connections create a function bool connection_potential(connection_t). Checks if a connection can reach connect amount. returns true/false. If outcome of connection is false, completely discard it
+
+}
 
 short eval_pos_depth(struct matrix_t* board, struct node_t* piece, short depth, short maximizingPlayer, short currentPlayer, short playerAmount, short connectAmount, short* bestColumn){
 
