@@ -2,7 +2,7 @@ SCRIPT_DIR=$(dirname "${BASH_SOURCE[0]}")
 PATH_TO_SRC="../src"
 MAIN_FILE_NAME="main.c"
 OUT_FILE_NAME="temp"
-COMPILER="gcc -Wall -pedantic -std=c11 "
+COMPILER="gcc -Wall -pedantic -std=c11 -lm "
 EXECUTE_OUT="./$OUT_FILE_NAME"
 DELETE_OUT="rm $OUT_FILE_NAME"
 PATH_TO_RES="../res"

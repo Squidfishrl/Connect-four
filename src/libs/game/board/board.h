@@ -423,7 +423,7 @@ struct node_t* init_node(int row, int column, struct node_t* up, struct node_t* 
 // }
 //
 // // O(kn) k = rows, n = columns in a matrix
-
+// 
 // void basic_print_matrix(struct matrix_t* matrix){
 //
 //     for(struct node_t* iterNode1 = get_node_by_cords(matrix, matrix->rows-1, 0); iterNode1 != NULL; iterNode1 = iterNode1->down){
