@@ -26,8 +26,8 @@ struct connection_t{
     /*
         0-horizontal
         1-vertical
-        2-positive slope diagonal (up->down)
-        3-negative slope diagonal (down->up)
+        2-positive slope diagonal (down->up)
+        3-negative slope diagonal (up->down)
     */
 
     bool open;
@@ -146,6 +146,17 @@ bool has_potential(struct connection_t* connection, short connectAmount);
 
 int eval_valid_connection(struct connection_t* connection, short connectAmount); // helper function for eval_board
 
+bool is_right_trap(struct connection_t* connection, short connectAmount);
+/*
+    Checks weather a connection is trapping the column to the right
+*/
+
+bool is_left_trap(struct connection_t* connection, short connectAmount);
+
+/*
+    Checks weather a connection is trapping the column to the right
+*/
+
 // short eval_pos_depth(struct matrix_t* board, short depth, short playerEval, short currentPlayer, short playerAmount, struct graphNode_t* graph, short connectionsForWin);
 // short eval_pos_breadth(struct matrix_t* board, short depth, short playerEval, short currentPlayer, short playerAmount, struct graphNode_t* current, struct graphNode_t* next, short connectionsForWin);
 // int eval_pos_depth(struct matrix_t* board, short depth, short playerEval, short currentPlayer, short playerAmount, short connectionsForWin, short* bestColumn);
@@ -159,22 +170,107 @@ int eval_valid_connection(struct connection_t* connection, short connectAmount);
 
 /* FUNCTION DEFINITIONS */
 
+bool is_left_trap(struct connection_t* connection, short connectAmount){
+    /*
+        O(1)
+        Checks if a connection is a trap on its left column (blocks the opponent from placing in a column above a certain height)
+
+        parameters (connection, connectAmount)
+            connection -> the conneciton that is being validated for a trap
+            connectAmount -> the amount of connections needed to create a "connect four" - needed to validate traps
+
+        returns (bool)
+            true - the connection blocks pieces from being placed to the right
+            false - the connection isnt large enough for a trap / its a vertical connection / a trap isnt possible
+    */
+
+    // if connection doesnt threaten a "connect four" or its vertical, then it isnt a trap
+    if(connection->amount != connectAmount - 1){
+        return false;
+    }
+
+    if(connection->side == 0){ // horizontal
+        // if connection is 1 node away from a connect four but requires atleast one node placed(in a column) before it is
+        if(is_exposed(connection->start, 0) && is_exposed(connection->start, 4)){
+            return true;
+        }
+    }else if(connection->side == 2){ // positive slope diagonal
+        if(is_exposed(connection->start, 4) && is_exposed(connection->end->down->left, 3)){
+            return true;
+        }
+    }else if(connection->side == 3){ // negative slope diagonal
+        if(is_exposed(connection->start, 6) && is_exposed(connection->end->up->left, 3)){
+            return true;
+        }
+    }
+
+    // vertical connections can never be a trap
+    return false;
+}
+
+bool is_right_trap(struct connection_t* connection, short connectAmount){
+
+    /*
+        O(1)
+        Checks if a connection is a trap on its right column (blocks the opponent from placing in a column above a certain height)
+
+        parameters (connection, connectAmount)
+            connection -> the conneciton that is being validated for a trap
+            connectAmount -> the amount of connections needed to create a "connect four" - needed to validate traps
+
+        returns (bool)
+            true - the connection blocks pieces from being placed to the right
+            false - the connection isnt large enough for a trap / its a vertical connection / a trap isnt possible
+    */
+
+    // if connection doesnt threaten a "connect four" or its vertical, then it isnt a trap
+    if(connection->amount != connectAmount - 1){
+        return false;
+    }
+
+    if(connection->side == 0){ // horizontal
+        // if connection is 1 node away from a connect four but requires atleast one node placed(in a column) before it is
+        if(is_exposed(connection->end, 1) && is_exposed(connection->end, 7)){
+            return true;
+        }
+    }else if(connection->side == 2){ // positive slope diagonal
+        if(is_exposed(connection->end, 5) && is_exposed(connection->end->up->right, 3)){
+            return true;
+        }
+    }else if(connection->side == 3){ // negative slope diagonal
+        if(is_exposed(connection->end, 7) && is_exposed(connection->end->right->down, 3)){
+            return true;
+        }
+    }
+
+    // vertical connections can never be a trap
+    return false;
+}
+
 int eval_valid_connection(struct connection_t* connection, short connectAmount){ // helper function for eval_board
 
     int score;
 
     if(connection->amount == connectAmount){
-        score = 10000;
+        score = 1001;
     }else if(connection->amount == connectAmount-1){
 
-        score = 3;
+        score = 5;
+
+        if(is_left_trap(connection, connectAmount)){
+            score *= 3;
+        }
+
+        if(is_right_trap(connection, connectAmount)){
+            score *= 3;
+        }
 
     }else if(connection->amount == connectAmount -2){
 
-        score = 1;
+        score = 3;
 
     }else{
-        score = 0;
+        score = 1;
     }
     return score;
 }
@@ -269,6 +365,7 @@ int eval_board(struct matrix_t* board, short player, short connectAmount){
             }
         }
     }
+
 
     // printf("\n");
     // basic_print_matrix(board);
@@ -555,8 +652,7 @@ short eval_pos_depth(struct matrix_t* board, struct node_t* piece, short depth, 
         // basic_print_matrix(board);
         // printf("\n%d", eval);
         // getchar();
-        // bot move
-        // if(piece->type == maximizingPlayer){
+        // if(piece->type != maximizingPlayer){
         //     return eval;
         // }else{
         //     return eval * -1;
@@ -566,10 +662,9 @@ short eval_pos_depth(struct matrix_t* board, struct node_t* piece, short depth, 
 
     if(currentPlayer == maximizingPlayer){
         // score = lowest value
-        short highScore = -32000;
-        short newScore;
-
-        for(short i = 0; i<board->columns; i++){
+        int highScore = -32000;
+        int newScore;
+        for(int i = 0; i<board->columns; i++){
             // add new piece
             struct node_t* newPiece = add_piece(board, currentPlayer, i);
 
@@ -582,7 +677,8 @@ short eval_pos_depth(struct matrix_t* board, struct node_t* piece, short depth, 
 
             newScore = eval_pos_depth(board, newPiece, depth-1, maximizingPlayer, 1 + (currentPlayer >= playerAmount ? 0 : currentPlayer), playerAmount, connectAmount, bestColumn);
 
-            if(newScore > highScore || (newScore == highScore && rand() % 1)){ // if scores have the same value, randomly choose one
+
+            if(newScore > highScore || (newScore == highScore && rand() % 1)){
                 *bestColumn = i;
                 highScore = newScore;
             }
@@ -595,14 +691,17 @@ short eval_pos_depth(struct matrix_t* board, struct node_t* piece, short depth, 
 
             //clear piece
             newPiece->type = 0;
+
+            if(newScore >= 1000){
+                break;
+            }
         }
 
         return highScore;
 
     }else{
-        short minScore = 32000;
-        short newScore;
-
+        int minScore = 32000;
+        int newScore;
         for(short i = 0; i<board->columns; i++){
 
             // add new piece
@@ -629,6 +728,10 @@ short eval_pos_depth(struct matrix_t* board, struct node_t* piece, short depth, 
 
             //clear piece
             newPiece->type = 0;
+
+            if(newScore <= -1000){
+                break;
+            }
         }
 
         return minScore;
