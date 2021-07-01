@@ -581,7 +581,8 @@ short eval_pos_depth(struct matrix_t* board, struct node_t* piece, short depth, 
             // score = highestScore
 
             newScore = eval_pos_depth(board, newPiece, depth-1, maximizingPlayer, 1 + (currentPlayer >= playerAmount ? 0 : currentPlayer), playerAmount, connectAmount, bestColumn);
-            if(newScore > highScore){
+
+            if(newScore > highScore || (newScore == highScore && rand() % 1)){ // if scores have the same value, randomly choose one
                 *bestColumn = i;
                 highScore = newScore;
             }
@@ -615,7 +616,7 @@ short eval_pos_depth(struct matrix_t* board, struct node_t* piece, short depth, 
             // score = highestScore
             newScore = eval_pos_depth(board, newPiece, depth-1, maximizingPlayer, 1+(currentPlayer >= playerAmount ? 0 : currentPlayer), playerAmount, connectAmount, bestColumn);
 
-            if(newScore < minScore){
+            if(newScore < minScore || (newScore == minScore && rand() % 1)){ // if scores have the same value, randomly choose one
                 *bestColumn = i;
                 minScore = newScore;
             }
@@ -767,8 +768,6 @@ void game_loop(struct settings_t* settings, struct stats_t* stats, struct dict_t
 		stats->player[player-1].moves++;
 
     print_matrix(matrix, settings, colourDict);
-    printf("\n Board Score -> %d\n", eval_board(matrix, 1, settings->gameSettings.connectAmount));
-    printf("\n Board Score -> %d\n", eval_board(matrix, 2, settings->gameSettings.connectAmount));
 
         // win condition
     if(check_win(newNode, settings->gameSettings.connectAmount, 1)){
