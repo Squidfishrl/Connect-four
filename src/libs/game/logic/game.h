@@ -24,10 +24,16 @@ struct connection_t{
 
     char side;
     /*
-    1-horizontal
-    2-vertical
-    3-diagonal (up->down)
-    4-diagonal (down->up)
+        0-horizontal
+        1-vertical
+        2-positive slope diagonal (up->down)
+        3-negative slope diagonal (down->up)
+    */
+
+    bool open;
+    /*
+        true - the conenction can continue to expand because it has an exposed start/end at the connections direction
+        false - static connection, will never grow
     */
 };
 
@@ -63,10 +69,24 @@ struct node_t* get_top_node(struct matrix_t* board, short column);
 */
 
 
-bool is_exposed(struct node_t* node);
+bool is_exposed(struct node_t* node, short side);
 /*
     O(1)
     Check if any of the surrounding nodes of *set node are empty (type == 0)
+
+    parameters (node, side)
+        node - node that will get checked if its exposed
+        side - in which dimension does the node get checked
+                -1 -> all directions
+                0 -> left
+                1 -> right
+                2 -> up
+                3 -> down
+                4 -> down left
+                5 -> up right
+                6 -> up left
+                7 -> down right
+
 
     returns (bool)
         true - *set node has atleast 1 surrounding node that is empty (type == 0)
@@ -93,12 +113,38 @@ short fetch_exposed_nodes(struct matrix_t* board, struct node_t* exposedNodes[],
     //    X   O   X
     //    O X O X O
 
-    Checks every column for exposed nodes and adds them to an array (exposedNodes[])
+    Checks every column for exposed nodes and adds them to an array (exposedNodes[]). Array should be empty, because the exposed nodes are written as the frist elements of the array
 
     returns (short)
         total exposed nodes added
 */
 
+bool fetch_connections(struct node_t* node, struct connection_t* connections, short maxConnectionSize);
+/*
+    O(connections->amount * 4) all of set* nodes connections - if node has no adj nodes in the same type in a direction, only the set* node is added = start = end
+    Fetches all connections from a node and adds them to an array (connections). Array should be empty, because the connections are written as the first 4 elements of the array
+
+    returns (bool)
+        true - all connections are added to the *array connections
+        false - array size < 4, no connections were added
+*/
+
+bool has_potential(struct connection_t* connection, short connectAmount);
+/*
+    O(connectAmount)
+
+    Checks weather or not a connection can transposition into a "connect four"
+
+    parameters (connection, connectAmount)
+        connection -> the connection that is being evaluated
+        connectAmount -> how many nodes have to be connected to create a "connect four"
+
+    return value (bool)
+        true - the connectection could transposition into a "connect four" or it already is a "connect four"
+        false - the connection will never transposition into a "connect four"
+*/
+
+int eval_valid_connection(struct connection_t* connection, short connectAmount); // helper function for eval_board
 
 // short eval_pos_depth(struct matrix_t* board, short depth, short playerEval, short currentPlayer, short playerAmount, struct graphNode_t* graph, short connectionsForWin);
 // short eval_pos_breadth(struct matrix_t* board, short depth, short playerEval, short currentPlayer, short playerAmount, struct graphNode_t* current, struct graphNode_t* next, short connectionsForWin);
@@ -112,6 +158,218 @@ short fetch_exposed_nodes(struct matrix_t* board, struct node_t* exposedNodes[],
 
 
 /* FUNCTION DEFINITIONS */
+
+int eval_valid_connection(struct connection_t* connection, short connectAmount){ // helper function for eval_board
+
+    int score;
+
+    if(connection->amount == connectAmount){
+        score = 10000;
+    }else if(connection->amount == connectAmount-1){
+
+        score = 3;
+
+    }else if(connection->amount == connectAmount -2){
+
+        score = 1;
+
+    }else{
+        score = 0;
+    }
+    return score;
+}
+
+bool has_potential(struct connection_t* connection, short connectAmount){
+
+    /*
+        O(connectAmount)
+
+        Checks weather or not a connection can transposition into a "connect four"
+
+        parameters (connection, connectAmount)
+            connection -> the connection that is being evaluated
+            connectAmount -> how many nodes have to be connected to create a "connect four"
+
+        return value (bool)
+            true - the connectection could transposition into a "connect four" or it already is a "connect four"
+            false - the connection will never transposition into a "connect four"
+    */
+
+    // connection is already a "connect four"
+    if(connection->amount == connectAmount){
+        return true;
+    }
+
+    short possibleExpansion = 0;
+
+    if(connection->open){
+        // check how many nodes of the same type could be added
+        struct node_t* currentNode;
+
+        if(connection->side == 0){ // horizontal
+            for(currentNode = connection->start; currentNode->left != NULL && possibleExpansion < connectAmount && (is_exposed(currentNode, 0) || currentNode->left->type == connection->player); currentNode = currentNode->left, possibleExpansion++);
+            for(currentNode = connection->end; currentNode->right != NULL && possibleExpansion < connectAmount && (is_exposed(currentNode, 1) || currentNode->right->type == connection->player); currentNode = currentNode->right, possibleExpansion++);
+        }else if(connection->side == 1){ // vertical
+            for(currentNode = connection->start; currentNode->up != NULL && possibleExpansion < connectAmount && (is_exposed(currentNode, 2) || currentNode->up->type == connection->player); currentNode = currentNode->up, possibleExpansion++);
+            // dont have to count down because there is never empty space
+        }else if(connection->side == 2){ // positive slope diagonal
+            for(currentNode = connection->start; currentNode->up != NULL && currentNode->up->left != NULL && possibleExpansion < connectAmount && (is_exposed(currentNode, 6) || currentNode->up->left->type == connection->player); currentNode = currentNode->up->left, possibleExpansion++);
+            for(currentNode = connection->end; currentNode->down != NULL && currentNode->down->right != NULL && possibleExpansion < connectAmount && (is_exposed(currentNode, 7) || currentNode->down->right->type == connection->player); currentNode = currentNode->down->right, possibleExpansion++);
+        }else if(connection->side == 3){ // negative slope diagonal
+            for(currentNode = connection->end; currentNode->up != NULL && currentNode->up->right != NULL && possibleExpansion < connectAmount && (is_exposed(currentNode, 5) || currentNode->up->right->type == connection->player); currentNode = currentNode->up->right, possibleExpansion++);
+            for(currentNode = connection->start; currentNode->down != NULL && currentNode->down->left != NULL && possibleExpansion < connectAmount && (is_exposed(currentNode, 5) || currentNode->down->left->type == connection->player); currentNode = currentNode->down->left, possibleExpansion++);
+        }
+    }
+
+    if(possibleExpansion+connection->amount >= connectAmount){
+        return true;
+    }else{
+        return false;
+    }
+}
+
+int eval_board(struct matrix_t* board, short player, short connectAmount){
+
+    int playerScore = 0;
+    int nonPlayerScore = 0;
+
+    short maxExposedNodes = (board->rows * board->columns/2) + board->columns;
+    /*
+        worst case would look like, where exposed nodes are = (board->rows * board->columns/2) + board->columns:
+        X   O   X
+        O   X   O
+        X   O   X
+        O X O X O
+    */
+    struct node_t* exposedNodes[maxExposedNodes];
+
+    // add exposed nodes and fetch their amount
+    short currentExposedNodes = fetch_exposed_nodes(board, exposedNodes, maxExposedNodes);
+
+    struct connection_t connectionArr[4];
+
+    for(short i = 0; i < currentExposedNodes; i++){
+
+        // fetch all 4 connections from exposed node
+        fetch_connections(exposedNodes[i], connectionArr, 4);
+
+        for(short b = 0; b<4; b++){
+            // iterate over all connections
+
+            // check if connection can transposition into a connect_four
+            if(has_potential(&connectionArr[b], connectAmount)){
+                // printf("HAS POTENTIAL");
+                // getchar();
+                // give connection a score and add it to player / non player
+                if(connectionArr[b].player == player){
+                    playerScore += eval_valid_connection(&connectionArr[b], connectAmount);
+                }else{
+                    nonPlayerScore += eval_valid_connection(&connectionArr[b], connectAmount);
+                }
+            }
+        }
+    }
+
+    // printf("\n");
+    // basic_print_matrix(board);
+    // printf("\nPLAYER SCORE - %d\nNON PLAYER SCORE - %d", playerScore, nonPlayerScore);
+    // printf("\nTOTAL SCORE - %d\n", playerScore - nonPlayerScore);
+    // getchar();
+
+    // printf("Player score - %d\n Non player score %d\n", playerScore, nonPlayerScore);
+    // TODO from exposedNodes add connections. if connection size is = connection amount return max score. if connections = connect amount - 1 but connectection type = player type  also return max score
+    // TODO before evaluating connections create a function bool connection_potential(connection_t). Checks if a connection can reach connect amount. returns true/false. If outcome of connection is false, completely discard it
+    return playerScore - nonPlayerScore;
+}
+
+bool fetch_connections(struct node_t* node, struct connection_t* connections, short maxConnectionSize){
+
+    /*
+        O(connections->amount * 4) connections with the same type as node
+        Fetches all connections from a node and adds them to an array (connections). Array should be empty, because the connections are written as the first 4 elements of the array
+
+        returns (bool)
+            true - all connections are added to the *array connections
+            false - array size < 4, no connections were added
+    */
+
+    if(maxConnectionSize < 4){
+        return false;
+    }
+
+    struct connection_t currentConnection;
+    struct node_t* start, * end;
+    short pieceCount;
+
+    /* horizontal connection*/
+
+    // left
+    for(pieceCount = 1, start = node ; start->left != NULL && start->left->type == node->type; start = start->left, pieceCount++);
+    // right
+    for(end = node; end->right != NULL && end->right->type == node->type; end = end->right, pieceCount++);
+
+    currentConnection.start = start;
+    currentConnection.end = end;
+    currentConnection.amount = pieceCount;
+    currentConnection.player = node->type;
+    currentConnection.side = 0;
+    currentConnection.open = (start->left != NULL && start->left->type == 0) || (end->right != NULL && end->right->type == 0);
+
+    connections[0] = currentConnection;
+
+
+    /* vertical connection */
+
+    // up
+    for(pieceCount = 1, start = node ; start->up != NULL && start->up->type == node->type; start = start->up, pieceCount++);
+    // down
+    for(end = node; end->down != NULL && end->down->type == node->type; end = end->down, pieceCount++);
+
+    currentConnection.start = start;
+    currentConnection.end = end;
+    currentConnection.amount = pieceCount;
+    currentConnection.player = node->type;
+    currentConnection.side = 1;
+    currentConnection.open = (start->up != NULL && start->up->type == 0) || (end->down != NULL && end->down->type == 0);
+
+    connections[1] = currentConnection;
+
+
+    /* positive diagonal */
+
+    // up right
+    for(pieceCount = 1, end = node ; end->up != NULL && end->up->right != NULL && end->up->right->type == node->type; end = end->up->right, pieceCount++);
+    // down left
+    for(pieceCount = 1, start = node ; start->down != NULL && start->down->left != NULL && start->down->left->type == node->type; start = start->down->left, pieceCount++);
+
+    currentConnection.start = start;
+    currentConnection.end = end;
+    currentConnection.amount = pieceCount;
+    currentConnection.player = node->type;
+    currentConnection.side = 2;
+    currentConnection.open = (start->up != NULL && start->up->right != NULL && start->up->right->type == 0) || (end->down != NULL && end->down->left != NULL && end->down->left->type == 0);
+
+    connections[2] = currentConnection;
+
+
+    /* negative diagonal */
+
+    // up left
+    for(pieceCount = 1, start = node ; start->up != NULL && start->up->left != NULL && start->up->left->type == node->type; start = start->up->left, pieceCount++);
+    // down right
+    for(pieceCount = 1, end = node ; end->down != NULL && end->down->right != NULL && end->down->right->type == node->type; end = end->down->right, pieceCount++);
+
+    currentConnection.start = start;
+    currentConnection.end = end;
+    currentConnection.amount = pieceCount;
+    currentConnection.player = node->type;
+    currentConnection.side = 3;
+    currentConnection.open = (start->up != NULL && start->up->left != NULL && start->up->left->type == 0) || (end->down != NULL && end->down->right != NULL && end->down->right->type == 0);
+
+    connections[3] = currentConnection;
+
+    return true;
+}
 
 bool is_adj_column_empty(struct matrix_t* board, short column){
 
@@ -153,7 +411,7 @@ short fetch_exposed_nodes(struct matrix_t* board, struct node_t* exposedNodes[],
         //    X   O   X
         //    O X O X O
 
-        Checks every column for exposed nodes and adds them to an array (exposedNodes[])
+        Checks every column for exposed nodes and adds them to an array (exposedNodes[]). Array should be empty, because the exposed nodes are written as the frist elements of the array
 
         returns (short)
             total exposed nodes added
@@ -168,64 +426,95 @@ short fetch_exposed_nodes(struct matrix_t* board, struct node_t* exposedNodes[],
 
         // essentially -> start from the top. if top is exposed, add top to exposed array. go down and repeat until current is NULL or not exposed (or max array size is reached)
         // 1 liner :sunglasses:
-        for(currentNode = get_top_node(board, i); currentNode != NULL && is_exposed(currentNode) && exposedNodesCurrSize < exposedNodesMaxSize; exposedNodes[exposedNodesCurrSize++] = currentNode, currentNode = currentNode->down);
+        for(currentNode = get_top_node(board, i); currentNode != NULL && is_exposed(currentNode, -1) && exposedNodesCurrSize < exposedNodesMaxSize; exposedNodes[exposedNodesCurrSize++] = currentNode, currentNode = currentNode->down);
     }
 
     return exposedNodesCurrSize;
 }
 
-bool is_exposed(struct node_t* node){
+bool is_exposed(struct node_t* node, short side){
 
     /*
         O(1)
         Check if any of the surrounding nodes of *set node are empty (type == 0)
+
+        parameters (node, side)
+            node - node that will get checked if its exposed
+            side - in which dimension does the node get checked
+                    -1 -> all directions
+                    0 -> left
+                    1 -> right
+                    2 -> up
+                    3 -> down
+                    4 -> down left
+                    5 -> up right
+                    6 -> up left
+                    7 -> down right
+
 
         returns (bool)
             true - *set node has atleast 1 surrounding node that is empty (type == 0)
             false - *set node has 0 surrounding nodes that are empty (type == 0)
     */
 
-    // check if node above is empty
-    if(node->up != NULL && node->up->type == 0){
-        return true;
+    switch(side){
+
+        case -1: // all directions
+            for(short i = 0; i < 8; i++){
+                if(is_exposed(node, i)){
+                    return true;
+                }
+            }
+            break;
+
+        case 0: // left
+            if(node->left != NULL && node->left->type == 0){
+                return true;
+            }
+            break;
+
+        case 1: // right
+            if(node->right != NULL && node->right->type == 0){
+                return true;
+            }
+            break;
+
+        case 2: // up
+            if(node->up != NULL && node->up->type == 0){
+                return true;
+            }
+            break;
+
+        case 3: // down
+            if(node->down != NULL && node->down->type == 0){
+                return true;
+            }
+            break;
+
+        case 4: // down left
+            if(node->down != NULL && node->down->left != NULL && node->down->left->type == 0){
+                return true;
+            }
+            break;
+
+        case 5: // up right
+            if(node->up != NULL && node->up->right != NULL && node->up->right->type == 0){
+                return true;
+            }
+            break;
+
+        case 6: // up left
+            if(node->up != NULL && node->up->left != NULL && node->up->left->type == 0){
+                return true;
+            }
+            break;
+
+        case 7: // down right
+            if(node->down != NULL && node->down->right != NULL && node->down->right->type == 0){
+                return true;
+            }
     }
 
-    // check if node below is empty
-    if(node->down != NULL && node->down->type == 0){
-        return true;
-    }
-
-    // check if left node is empty
-    if(node->left != NULL && node->left->type == 0){
-        return true;
-    }
-
-    // check if right node is empty
-    if(node->right != NULL && node->right->type == 0){
-        return true;
-    }
-
-    // check if diagonal up left node is empty
-    if(node->up != NULL && node->up->left != NULL && node->up->left->type == 0){
-        return true;
-    }
-
-    // check if diagonal up right node is empty
-    if(node->up != NULL && node->up->right != NULL && node->up->right->type == 0){
-        return true;
-    }
-
-    // check if diagonal down right node is empty
-    if(node->down != NULL && node->down->right != NULL && node->down->right->type == 0){
-        return true;
-    }
-
-    // check if diagonal down left node is empty
-    if(node->down != NULL && node->down->left != NULL && node->down->left->type == 0){
-        return true;
-    }
-
-    // no empty surrounding nodes are found
     return false;
 }
 
@@ -254,26 +543,6 @@ struct node_t* get_top_node(struct matrix_t* board, short column){
     return searchNode;
 }
 
-int eval_board(struct matrix_t* board, short player, short connectAmount){
-
-    short maxExposedNodes = (board->rows * board->columns/2) + board->columns;
-    /*
-        worst case would look like, where exposed nodes are = (board->rows * board->columns/2) + board->columns:
-        X   O   X
-        O   X   O
-        X   O   X
-        O X O X O
-    */
-    struct node_t* exposedNodes[maxExposedNodes];
-
-    // add exposed nodes and fetch their amount
-    short currentExposedNodes = fetch_exposed_nodes(board, exposedNodes, maxExposedNodes);
-    // TODO create a function that returns all connections from a node. Similar to fetch_exposed_nodes in the way it adds to an array and returns array size. array size would always be 4 - vertical horizontal diagonal positive and diagonal negative
-    // TODO from exposedNodes add connections. if connection size is = connection amount return max score. if connections = connect amount - 1 but connectection type = player type  also return max score
-    // TODO before evaluating connections create a function bool connection_potential(connection_t). Checks if a connection can reach connect amount. returns true/false. If outcome of connection is false, completely discard it
-
-}
-
 short eval_pos_depth(struct matrix_t* board, struct node_t* piece, short depth, short maximizingPlayer, short currentPlayer, short playerAmount, short connectAmount, short* bestColumn){
 
     // exit condition -> winning node or depth
@@ -281,14 +550,17 @@ short eval_pos_depth(struct matrix_t* board, struct node_t* piece, short depth, 
 
 
         // get move score
-        short eval = eval_move(piece, connectAmount);
+        return eval_board(board, maximizingPlayer, connectAmount);
 
+        // basic_print_matrix(board);
+        // printf("\n%d", eval);
+        // getchar();
         // bot move
-        if(piece->type == maximizingPlayer){
-            return eval;
-        }else{
-            return eval * -1;
-        }
+        // if(piece->type == maximizingPlayer){
+        //     return eval;
+        // }else{
+        //     return eval * -1;
+        // }
 
     }
 
@@ -327,7 +599,7 @@ short eval_pos_depth(struct matrix_t* board, struct node_t* piece, short depth, 
         return highScore;
 
     }else{
-        short highScore = 32000;
+        short minScore = 32000;
         short newScore;
 
         for(short i = 0; i<board->columns; i++){
@@ -343,9 +615,9 @@ short eval_pos_depth(struct matrix_t* board, struct node_t* piece, short depth, 
             // score = highestScore
             newScore = eval_pos_depth(board, newPiece, depth-1, maximizingPlayer, 1+(currentPlayer >= playerAmount ? 0 : currentPlayer), playerAmount, connectAmount, bestColumn);
 
-            if(newScore < highScore){
+            if(newScore < minScore){
                 *bestColumn = i;
-                highScore = newScore;
+                minScore = newScore;
             }
 
             // printf("COLUMN %d SCORE - %d\n", i, newScore);
@@ -358,7 +630,7 @@ short eval_pos_depth(struct matrix_t* board, struct node_t* piece, short depth, 
             newPiece->type = 0;
         }
 
-        return highScore;
+        return minScore;
 
     }
 
@@ -495,7 +767,8 @@ void game_loop(struct settings_t* settings, struct stats_t* stats, struct dict_t
 		stats->player[player-1].moves++;
 
     print_matrix(matrix, settings, colourDict);
-    printf("\n Move Score -> %d\n", eval_move(newNode, settings->gameSettings.connectAmount));
+    printf("\n Board Score -> %d\n", eval_board(matrix, 1, settings->gameSettings.connectAmount));
+    printf("\n Board Score -> %d\n", eval_board(matrix, 2, settings->gameSettings.connectAmount));
 
         // win condition
     if(check_win(newNode, settings->gameSettings.connectAmount, 1)){
