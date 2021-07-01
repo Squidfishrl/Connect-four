@@ -146,16 +146,37 @@ bool has_potential(struct connection_t* connection, short connectAmount);
 
 int eval_valid_connection(struct connection_t* connection, short connectAmount); // helper function for eval_board
 
+
 bool is_right_trap(struct connection_t* connection, short connectAmount);
-/*
-    Checks weather a connection is trapping the column to the right
-*/
+    /*
+        O(1)
+        Checks if a connection is a trap on its right column (blocks the opponent from placing in a column above a certain height)
+
+        parameters (connection, connectAmount)
+            connection -> the conneciton that is being validated for a trap
+            connectAmount -> the amount of connections needed to create a "connect four" - needed to validate traps
+
+        returns (bool)
+            true - the connection blocks pieces from being placed to the right
+            false - the connection isnt large enough for a trap / its a vertical connection / a trap isnt possible
+    */
+
 
 bool is_left_trap(struct connection_t* connection, short connectAmount);
-
 /*
-    Checks weather a connection is trapping the column to the right
+    O(1)
+    Checks if a connection is a trap on its left column (blocks the opponent from placing in a column above a certain height)
+
+    parameters (connection, connectAmount)
+        connection -> the conneciton that is being validated for a trap
+        connectAmount -> the amount of connections needed to create a "connect four" - needed to validate traps
+
+    returns (bool)
+        true - the connection blocks pieces from being placed to the right
+        false - the connection isnt large enough for a trap / its a vertical connection / a trap isnt possible
 */
+
+
 
 // short eval_pos_depth(struct matrix_t* board, short depth, short playerEval, short currentPlayer, short playerAmount, struct graphNode_t* graph, short connectionsForWin);
 // short eval_pos_breadth(struct matrix_t* board, short depth, short playerEval, short currentPlayer, short playerAmount, struct graphNode_t* current, struct graphNode_t* next, short connectionsForWin);
@@ -184,28 +205,62 @@ bool is_left_trap(struct connection_t* connection, short connectAmount){
             false - the connection isnt large enough for a trap / its a vertical connection / a trap isnt possible
     */
 
-    // if connection doesnt threaten a "connect four" or its vertical, then it isnt a trap
-    if(connection->amount != connectAmount - 1){
-        return false;
-    }
+
+    bool isLeftTrap = false;
+    struct node_t* tempPiece = NULL;
+    short holdType = 0;
 
     if(connection->side == 0){ // horizontal
-        // if connection is 1 node away from a connect four but requires atleast one node placed(in a column) before it is
-        if(is_exposed(connection->start, 0) && is_exposed(connection->start, 4)){
-            return true;
+
+        // check if room for a trap exists
+        if(is_exposed(connection->start, 0)){
+            
+            tempPiece = connection->start->left;
+            holdType = tempPiece->type;
+            tempPiece->type = connection->player;
+            // check if tempPiece is exposed and can lead to connect four
+            if(is_exposed(tempPiece, 3) && check_win(connection->start, connectAmount, 0)){
+                isLeftTrap = true;
+            }
         }
+
     }else if(connection->side == 2){ // positive slope diagonal
-        if(is_exposed(connection->start, 4) && is_exposed(connection->end->down->left, 3)){
-            return true;
+
+        // check if there is an empty space for a connect four
+        if(is_exposed(connection->start, 4)){
+
+            tempPiece = connection->start->down->left;
+            holdType = tempPiece->type;
+            tempPiece->type = connection->player;
+
+            // check if a trap can exist and if can lead to a win
+            if(is_exposed(tempPiece, 3) && check_win(connection->start, connectAmount, 0)){
+                isLeftTrap = true;
+            }
         }
+
     }else if(connection->side == 3){ // negative slope diagonal
-        if(is_exposed(connection->start, 6) && is_exposed(connection->end->up->left, 3)){
-            return true;
+
+        // check if there is an empty space for a connect four
+        if(is_exposed(connection->start, 6)){
+
+            tempPiece = connection->start->up->left;
+            holdType = tempPiece->type;
+            tempPiece->type = connection->player;
+
+            // check if a trap can exist and if can lead to a win
+            if(is_exposed(tempPiece, 3) && check_win(connection->start, connectAmount, 0)){
+                isLeftTrap = true;
+            }
         }
     }
 
+    // change back type
+    if(tempPiece != NULL){
+        tempPiece->type = holdType;
+    }
     // vertical connections can never be a trap
-    return false;
+    return isLeftTrap;
 }
 
 bool is_right_trap(struct connection_t* connection, short connectAmount){
@@ -224,46 +279,77 @@ bool is_right_trap(struct connection_t* connection, short connectAmount){
     */
 
     // if connection doesnt threaten a "connect four" or its vertical, then it isnt a trap
-    if(connection->amount != connectAmount - 1){
-        return false;
-    }
+
+    bool isRightTrap = false;
+    struct node_t* tempPiece = NULL;
+    short holdType = 0;
 
     if(connection->side == 0){ // horizontal
         // if connection is 1 node away from a connect four but requires atleast one node placed(in a column) before it is
-        if(is_exposed(connection->end, 1) && is_exposed(connection->end, 7)){
-            return true;
+
+        // check if room for a trap exists
+        if(is_exposed(connection->start, 1)){
+
+            tempPiece = connection->end->right;
+            holdType = tempPiece->type;
+            tempPiece->type = connection->player;
+            // check if tempPiece is exposed and can lead to connect four
+            if(is_exposed(tempPiece, 3) && check_win(connection->start, connectAmount, 0)){
+                isRightTrap = true;
+            }
         }
+
     }else if(connection->side == 2){ // positive slope diagonal
-        if(is_exposed(connection->end, 5) && is_exposed(connection->end->up->right, 3)){
-            return true;
+
+        if(is_exposed(connection->start, 5)){
+
+            tempPiece = connection->end->up->right;
+            holdType = tempPiece->type;
+            tempPiece->type = connection->player;
+            // check if tempPiece is exposed and can lead to connect four
+            if(is_exposed(tempPiece, 3) && check_win(connection->start, connectAmount, 0)){
+                isRightTrap = true;
+            }
         }
+
     }else if(connection->side == 3){ // negative slope diagonal
-        if(is_exposed(connection->end, 7) && is_exposed(connection->end->right->down, 3)){
-            return true;
+
+        if(is_exposed(connection->start, 7)){
+
+            tempPiece = connection->end->down->right;
+            holdType = tempPiece->type;
+            tempPiece->type = connection->player;
+            // check if tempPiece is exposed and can lead to connect four
+            if(is_exposed(tempPiece, 3) && check_win(connection->start, connectAmount, 0)){
+                isRightTrap = true;
+            }
         }
     }
 
     // vertical connections can never be a trap
-    return false;
+    if(tempPiece != NULL){
+        tempPiece->type = holdType;
+    }
+
+    return isRightTrap;
 }
 
 int eval_valid_connection(struct connection_t* connection, short connectAmount){ // helper function for eval_board
 
-    int score;
+    int score = 0;
 
     if(connection->amount == connectAmount){
-        score = 1001;
+        score = 1000;
     }else if(connection->amount == connectAmount-1){
+
 
         score = 5;
 
-        if(is_left_trap(connection, connectAmount)){
-            score *= 3;
+        // vertical connections can easily be stopped + can never be traps so discourage them (if its possible to make a horizontal/diagonal connection)
+        if(connection->side == 1){
+            score = 4;
         }
 
-        if(is_right_trap(connection, connectAmount)){
-            score *= 3;
-        }
 
     }else if(connection->amount == connectAmount -2){
 
@@ -272,6 +358,16 @@ int eval_valid_connection(struct connection_t* connection, short connectAmount){
     }else{
         score = 1;
     }
+
+    if(is_left_trap(connection, connectAmount)){
+        score *= 3;
+    }
+
+
+    if(is_right_trap(connection, connectAmount)){
+        score *= 3;
+    }
+
     return score;
 }
 
@@ -842,14 +938,16 @@ void game_loop(struct settings_t* settings, struct stats_t* stats, struct dict_t
                 if(player == 1){
                     log_stderr(0, 0, "Ask player for column pick");
 
-
                     while(get_short_from_char(&position, 1, matrix->columns, "Invalid position!\nchoose column: ") != true){
-                    // msg repeating because if get_short exits from esc it won't say any msg
+                        // msg repeating because if get_short exits from esc it won't say any msg
                         printf("Invalid position!\nchoose column: ");
                     };
+
                 }else{
                     eval_pos_depth(matrix, NULL, settings->gameSettings.botDepth, player, player, settings->gameSettings.playerAmount, settings->gameSettings.connectAmount, &bestPos);
                     position = bestPos+1;
+                    // eval_pos_depth(matrix, NULL, settings->gameSettings.botDepth, player, player, settings->gameSettings.playerAmount, settings->gameSettings.connectAmount, &bestPos);
+                    // position = bestPos+1;
                 }
             }
 
